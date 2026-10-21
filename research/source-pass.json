@@ -1,0 +1,433 @@
+[
+  {
+    "name": "rifts",
+    "version": "0.3.10",
+    "archive_url": "https://static.crates.io/crates/rifts/rifts-0.3.10.crate",
+    "checksum_verified": "4d710435388e0d04f3d57b64a00f9d367d00cdeef1fa9bda555b733799d8218d",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "396a9d250ab9b346bfb4de817f362b4d38c5275f73b0d38fa8a31ed29a3ce678",
+        "bytes": 4797
+      },
+      {
+        "path": "LICENSE-MIT",
+        "sha256": "612ed5859372d8d9f87cb71b4ff950227e8fdcc27a4d0d6588f533354d1848d9",
+        "bytes": 1066
+      },
+      {
+        "path": "README.adoc",
+        "sha256": "2ee247455d8b03606ccb8b15a08e16692a6ccb425bcb5f2ec6dd7d5af17b831d",
+        "bytes": 3605
+      },
+      {
+        "path": "src/flow/backpressure.rs",
+        "sha256": "0ba9afa5415dca5dfb3d760e2597d988547d43ced00f781bdd050ec41f9cd70f",
+        "bytes": 15211
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "7ebb0af84e45737d9d20269c2c6f04914c9031727119f484f07f63ed9c5d59fd",
+        "bytes": 7412
+      }
+    ]
+  },
+  {
+    "name": "nexusnet-scheduler",
+    "version": "0.1.0",
+    "archive_url": "https://static.crates.io/crates/nexusnet-scheduler/nexusnet-scheduler-0.1.0.crate",
+    "checksum_verified": "8f0e1eb7ec39773c1a8c5afdc96da2440bb1f8c02ddcd243798b864ebf879d86",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "07c5f2790c1e4636c8d0011095cdab319e8c92b931a521b3d66e848e8f8db562",
+        "bytes": 1881
+      },
+      {
+        "path": "README.md",
+        "sha256": "d400165f2e81e265d1fd5691a5f23eca09bf421b115e7206d6a5f72e6dfc0316",
+        "bytes": 7480
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "41813a21ce831baf9ef44c2fc18f6bcd80f7bc886bc419252eb70c6889598aab",
+        "bytes": 3986
+      },
+      {
+        "path": "src/priority.rs",
+        "sha256": "73c7fd555a7ffc467d430e51acd19db09c9f0826eea29a5d872a5262bacfa1b6",
+        "bytes": 14596
+      }
+    ]
+  },
+  {
+    "name": "firq-core",
+    "version": "0.1.3",
+    "archive_url": "https://static.crates.io/crates/firq-core/firq-core-0.1.3.crate",
+    "checksum_verified": "f9d7a526ff6d01fe28259414c444502c598ee93bec4e6b6a5851e54e856e8c25",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "7e24ecf1d6fcec9013d6ae5652369fcfc6ed26b947d347723700e951af987006",
+        "bytes": 1310
+      },
+      {
+        "path": "README.md",
+        "sha256": "56fd3de1cc09407a8280b9d87bb7f230a4bee5cb855653a2bdf06fa905c3e87f",
+        "bytes": 14079
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "6f4a2db56cb2169ee763820ea53e89199a119b235e79fbec004729fe78148d04",
+        "bytes": 1501
+      },
+      {
+        "path": "src/scheduler.rs",
+        "sha256": "cb5e9bd9e01b28695695a5e934efae5f61e4ba6f803d25bb306733c431b3f392",
+        "bytes": 37822
+      }
+    ]
+  },
+  {
+    "name": "coalescing_buffer",
+    "version": "0.1.0",
+    "archive_url": "https://static.crates.io/crates/coalescing_buffer/coalescing_buffer-0.1.0.crate",
+    "checksum_verified": "3a4404c49a9c718b8f19320006404986bc2e2dc21a987d1dd3b0d54ce77822dc",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "8620b9f7b92f45f6c2a9ddbee7f8aa9f872477a11745925bd6b2728c77b7bd44",
+        "bytes": 1118
+      },
+      {
+        "path": "LICENSE-APACHE",
+        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "bytes": 10847
+      },
+      {
+        "path": "LICENSE-MIT",
+        "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "bytes": 1071
+      },
+      {
+        "path": "README.md",
+        "sha256": "e2a1bace17479dda1ebaa0735f85ec1124c4ab74cf17e2aba030910c69b595c4",
+        "bytes": 334
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "a0a807fbf47bcd62476ef64659da554398c6e3bfaf15d276eeefa9e551679c18",
+        "bytes": 1409
+      },
+      {
+        "path": "src/ring/spsc_coalescing_ring_buffer.rs",
+        "sha256": "c3efb4e47e9f64ab5418397057c5084e8600ef69d675232a0514548249a8d340",
+        "bytes": 16718
+      }
+    ]
+  },
+  {
+    "name": "priority-queue",
+    "version": "2.7.0",
+    "archive_url": "https://static.crates.io/crates/priority-queue/priority-queue-2.7.0.crate",
+    "checksum_verified": "93980406f12d9f8140ed5abe7155acb10bb1e69ea55c88960b9c2f117445ef96",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "5296b1e6599903abbb3511d63dd6ba51e3d5fa71b5419e5babc25564530dd38e",
+        "bytes": 2158
+      },
+      {
+        "path": "README.md",
+        "sha256": "511bb09be0736dbea3f60e2952b3d0291ef2c4663933cfe63dacda1b569fbdba",
+        "bytes": 11526
+      },
+      {
+        "path": "src/double_priority_queue/iterators.rs",
+        "sha256": "8d97f44d63a7b43ee3f65003b156436a1041bf486b1cc75bf346d68b5f9027c2",
+        "bytes": 7352
+      },
+      {
+        "path": "src/double_priority_queue/mod.rs",
+        "sha256": "1b23d618a49b13227aa2062ee3c66d65b7f893cda61907495eafb836b80f482e",
+        "bytes": 41977
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "52c5383c090c2deec6cda05639356e0b279182865ddf7d8c53fc574be0c14491",
+        "bytes": 5749
+      },
+      {
+        "path": "src/priority_queue/iterators.rs",
+        "sha256": "8fbf59028642dc8cc678cdc3bb9553bb9ae56f0c4bed8c67d0f22e329f18e11f",
+        "bytes": 5835
+      },
+      {
+        "path": "src/priority_queue/mod.rs",
+        "sha256": "3b4f617a58152f53150d9b7ad008bfe610b1b89406674372770747c82a5f1539",
+        "bytes": 32935
+      }
+    ]
+  },
+  {
+    "name": "keyed_priority_queue",
+    "version": "0.4.2",
+    "archive_url": "https://static.crates.io/crates/keyed_priority_queue/keyed_priority_queue-0.4.2.crate",
+    "checksum_verified": "4ee7893dab2e44ae5f9d0173f26ff4aa327c10b01b06a72b52dd9405b628640d",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "a2f928aba1186b36ef0815c2faa78a8d046b676a114456ecdf8addb0071f7ce3",
+        "bytes": 1033
+      },
+      {
+        "path": "Readme.md",
+        "sha256": "0fc36b13f3197bbe18010b1b41b9ab7122d6498e547ad0db9421ba8f2eac37d3",
+        "bytes": 3025
+      },
+      {
+        "path": "src/editable_binary_heap.rs",
+        "sha256": "ca5afc34c62bf12fbad7c54aa3a5ec246bb46d88c06b53d8f933364d3f539d67",
+        "bytes": 19011
+      },
+      {
+        "path": "src/keyed_priority_queue.rs",
+        "sha256": "05ad14294bb7d45dae260f2c676a6d80a679b8cff28fa20005ebb171c217e0d3",
+        "bytes": 38423
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "0547b918b1ef762710baad5cbe4bc59757dd3e8d6ceafbc491a0634f00596192",
+        "bytes": 5648
+      }
+    ]
+  },
+  {
+    "name": "indexed_priority_queue",
+    "version": "0.3.0",
+    "archive_url": "https://static.crates.io/crates/indexed_priority_queue/indexed_priority_queue-0.3.0.crate",
+    "checksum_verified": "1523e738b9554395f973adce5c3f9bbb71357c90a3f91e8e37fce9e640726a27",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "f1551073183e3058c62ca18a901b172acb9bdd67addd1dd221f9178d4de353ea",
+        "bytes": 1249
+      },
+      {
+        "path": "README.md",
+        "sha256": "2ccf79019dda9b006fb0c24d82da97635bc18487b9183fc275d7b352b3f800ef",
+        "bytes": 2458
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "71da3e96cb4f0f477f3cead206d1c2a9f5d027cc4f2568abc76ba98ce6fb2c1a",
+        "bytes": 13055
+      }
+    ]
+  },
+  {
+    "name": "orx-priority-queue",
+    "version": "1.9.0",
+    "archive_url": "https://static.crates.io/crates/orx-priority-queue/orx-priority-queue-1.9.0.crate",
+    "checksum_verified": "41224e48f6cc24a1189c40180a358f8e3ca56ae108974ec43531f604921c44ec",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "a10165bb25797c727682467991087e21e866ebe16fa23387e4e3cbcf83ea1d33",
+        "bytes": 2418
+      },
+      {
+        "path": "LICENSE-APACHE",
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+        "bytes": 9723
+      },
+      {
+        "path": "LICENSE-MIT",
+        "sha256": "6c1254edb0cb18f12f600b5915078434ccc980a84d06fd2fae2aec345f5984a8",
+        "bytes": 1068
+      },
+      {
+        "path": "README.md",
+        "sha256": "9f05ab1ba9b2f96935d7d611a99f156bda4b70a5ed65f34d0466f2806e54dd4a",
+        "bytes": 12853
+      },
+      {
+        "path": "src/dary/daryheap.rs",
+        "sha256": "3e11716a03163565314d39aca421da91922024017f5fa90b1ff896498ca81973",
+        "bytes": 6056
+      },
+      {
+        "path": "src/dary/daryheap_const_helpers.rs",
+        "sha256": "2cd201ded61299121c06fa114b60b52b59e9315334f59983495d157d62636d17",
+        "bytes": 1244
+      },
+      {
+        "path": "src/dary/daryheap_index.rs",
+        "sha256": "9524f992eae59f3d7e7263b8dda4b5be45abee2b58d26c167cf7e92498fe5245",
+        "bytes": 10942
+      },
+      {
+        "path": "src/dary/daryheap_map.rs",
+        "sha256": "885be2c6e514c352ae86a5dcd02ee315f67584b9830a780fc491a032025cf53a",
+        "bytes": 9440
+      },
+      {
+        "path": "src/dary/heap.rs",
+        "sha256": "df2b70c02b943b0cac2b00d43baa68f146ad4a81928c75e24bf397ed2959eb5d",
+        "bytes": 12934
+      },
+      {
+        "path": "src/impl_queues/mod.rs",
+        "sha256": "6d01093435c4f8bafd742ceb39517639d766e7bdf6d686fff7a5e5f3259985a7",
+        "bytes": 82
+      },
+      {
+        "path": "src/impl_queues/priority_queue.rs",
+        "sha256": "5d0e82bb1ec18c28a519e56f08789ed824e00fdb92dd41e63f487e1cc4a6f1b5",
+        "bytes": 3810
+      },
+      {
+        "path": "src/impl_queues/std_binary_heap.rs",
+        "sha256": "3a717b8d9d89ececda73871533bf8b68944aaf16bf7b1c4e9e663217848224f5",
+        "bytes": 1701
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "e2bb114483759c414b19e84f103ff0841a4fe647165b95abb2177dfe38859a12",
+        "bytes": 1010
+      },
+      {
+        "path": "src/positions/heap_positions.rs",
+        "sha256": "178c441abae9d3a15e3f1d4e487ed9ad37876e4e8614607f3d123850c5f36909",
+        "bytes": 472
+      },
+      {
+        "path": "src/priority_queue.rs",
+        "sha256": "7f508599d75217c4de303cd35376d40ef54b0e2d7e8afd01049a9047ccaf4cec",
+        "bytes": 7257
+      },
+      {
+        "path": "src/priority_queue_deckey.rs",
+        "sha256": "521b45ab6833d0f3ee9849d9a33215cd4e04bb32966f850052b40277c0d57daf",
+        "bytes": 16108
+      }
+    ]
+  },
+  {
+    "name": "dary_heap",
+    "version": "0.3.9",
+    "archive_url": "https://static.crates.io/crates/dary_heap/dary_heap-0.3.9.crate",
+    "checksum_verified": "8b1e3a325bc115f096c8b77bbf027a7c2592230e70be2d985be950d3d5e60ebe",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "b3099d2d9a1843bc42a0a506795352cd85809d9d3f0f66a51788c9e604ea1fab",
+        "bytes": 1449
+      },
+      {
+        "path": "LICENSE-APACHE",
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+        "bytes": 9723
+      },
+      {
+        "path": "LICENSE-MIT",
+        "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+        "bytes": 1023
+      },
+      {
+        "path": "README.md",
+        "sha256": "3534f193e402ea101d8967ed462ee6bcc65d469ffd739b7db536d550f451b577",
+        "bytes": 4355
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "f8f589a62d9b63f1f3092d25f70a7cd08eb4b52475a30bfa6f78437400c7d439",
+        "bytes": 73078
+      }
+    ]
+  },
+  {
+    "name": "binary-heap-plus",
+    "version": "0.5.0",
+    "archive_url": "https://static.crates.io/crates/binary-heap-plus/binary-heap-plus-0.5.0.crate",
+    "checksum_verified": "e4551d8382e911ecc0d0f0ffb602777988669be09447d536ff4388d1def11296",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "25fa6d75408aa30bbf1106fa67ed1c524a3ee1fd0269a97a55c08ede9f480d8e",
+        "bytes": 1154
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9",
+        "bytes": 1046
+      },
+      {
+        "path": "README.md",
+        "sha256": "f54d0402ff80dd2c739d73db410be76b410a89e8dd50a5e37bb4bef9d4db6df4",
+        "bytes": 2175
+      },
+      {
+        "path": "src/binary_heap.rs",
+        "sha256": "b760004000738c431eae625b29529899cac2b1308624c8e054c5815b1645ddc1",
+        "bytes": 58035
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "bf9bb9e28b22f932c8eb13be18083c597067b907ddefe460ff3568e95d75026c",
+        "bytes": 17721
+      }
+    ]
+  },
+  {
+    "name": "radix-heap",
+    "version": "0.4.2",
+    "archive_url": "https://static.crates.io/crates/radix-heap/radix-heap-0.4.2.crate",
+    "checksum_verified": "59ffec9df464013295b499298811e6a3de31bf8128092135826517db12dee601",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "742480eb8abcfc034506055b943876f6d7029c477a542fb402a91bb7e2387b16",
+        "bytes": 1038
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "8be0464609e3fc81a5a80e83db254889b0875b462494e61ab0a7e369bab3d938",
+        "bytes": 1080
+      },
+      {
+        "path": "README.md",
+        "sha256": "9ab3920c687af196f9ecb8cb827866c8873886b90105a3b118d91fca66940a4d",
+        "bytes": 2259
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "5ff8235fd0bffef8b68c93a3aae7dc0a4081b198684a44f1f32f70051f07ae69",
+        "bytes": 21108
+      }
+    ]
+  },
+  {
+    "name": "cohort-queue",
+    "version": "0.1.6",
+    "archive_url": "https://static.crates.io/crates/cohort-queue/cohort-queue-0.1.6.crate",
+    "checksum_verified": "c08184ded552a8ca126aa01fd7a05eb5144ef74d4f211d275cab31bfd0ccc659",
+    "files": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "78ed5aea6f1b02d323e8ee17f976576543fae27d6bc429f921cb0bce9706d34a",
+        "bytes": 940
+      },
+      {
+        "path": "README.md",
+        "sha256": "6082e4c59de4c84562aa2b035cb3008e1e2e3209dd5ce99f0046a1a72775cff8",
+        "bytes": 14669
+      },
+      {
+        "path": "src/lib.rs",
+        "sha256": "a7de0b28fab47ef5e58f953f09a0ead0064f96ca96c2b8b5008e710bdfb12870",
+        "bytes": 20738
+      }
+    ]
+  }
+]

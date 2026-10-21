@@ -6,23 +6,25 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import sys
+import argparse
 
 ROOT=Path(__file__).resolve().parents[1]
-label=sys.argv[1]
+p=argparse.ArgumentParser();p.add_argument('label');p.add_argument('--bench',default='queues')
+args=p.parse_args();label=args.label;bench=args.bench
 if not label.replace('-','').isalnum(): raise SystemExit('invalid label')
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def command(*args): return subprocess.check_output(args,cwd=ROOT,text=True).strip()
-source_paths=[ROOT/'Cargo.toml',ROOT/'Cargo.lock',*sorted((ROOT/'src').glob('*.rs')),ROOT/'benches/queues.rs']
+source_paths=[ROOT/'Cargo.toml',ROOT/'Cargo.lock',*sorted((ROOT/'src').glob('*.rs')),ROOT/f'benches/{bench}.rs']
 subprocess.run(['git','diff','--exit-code','HEAD','--',*[str(p.relative_to(ROOT)) for p in source_paths]],cwd=ROOT,check=True)
 revision=command('git','rev-parse','HEAD')
 hashes={str(p.relative_to(ROOT)):sha(p) for p in source_paths}
-build=['/Users/james/.cargo/bin/cargo','bench','--locked','--all-features','--bench','queues','--no-run','--message-format=json']
+entry=Path.home()/'.cargo/bin/cargo'
+build=[str(entry) if entry.exists() else 'cargo','bench','--locked','--all-features','--bench',bench,'--no-run','--message-format=json']
 result=subprocess.run(build,cwd=ROOT,text=True,capture_output=True)
 (ROOT/'evidence'/f'{label}-build.log').write_text(result.stderr)
 result.check_returncode()
 artifacts=[json.loads(line) for line in result.stdout.splitlines() if line.startswith('{')]
-exe=next(Path(a['executable']) for a in artifacts if a.get('reason')=='compiler-artifact' and a['target']['name']=='queues' and 'bench' in a['target']['kind'] and a.get('executable'))
+exe=next(Path(a['executable']) for a in artifacts if a.get('reason')=='compiler-artifact' and a['target']['name']==bench and 'bench' in a['target']['kind'] and a.get('executable'))
 destination=ROOT/'build'/label
 if destination.exists(): raise SystemExit('refusing to overwrite a frozen executable')
 shutil.copy2(exe,destination)

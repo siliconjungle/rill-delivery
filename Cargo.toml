@@ -25,6 +25,11 @@ name = "queues"
 harness = false
 required-features = ["comparisons"]
 
+[[bench]]
+name = "delivery"
+harness = false
+required-features = ["comparisons"]
+
 [profile.dev]
 debug = 0
 incremental = false
