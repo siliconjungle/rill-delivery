@@ -1,0 +1,751 @@
+{
+  "tiny": [
+    {
+      "backend": "scan",
+      "median_ms": 6.3088335,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 7.0610835,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 7.1245415,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 7.160312,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 7.273729,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 7.301521,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 8.227,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 8.298771,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 8.4314165,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 8.652916,
+      "runs": 2
+    },
+    {
+      "backend": "sorted",
+      "median_ms": 9.14725,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 10.859396,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 11.9052085,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 12.455583,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 13.921292,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 14.669708,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 20.9317295,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 23.410854,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 23.701375,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 25.671792,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 26.0874585,
+      "runs": 2
+    }
+  ],
+  "small": [
+    {
+      "backend": "sorted",
+      "median_ms": 34.279083,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 38.0163955,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 38.1182085,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 38.38375,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 39.1103125,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 40.0119165,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 40.5368125,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 42.3208125,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 43.223062,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 43.4983125,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 45.1966665,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 47.9863955,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 48.185771,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 54.63025,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 64.126271,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 88.151,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 92.6790415,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 92.893,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 93.180854,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 107.5374375,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 174.8102705,
+      "runs": 2
+    }
+  ],
+  "coalesce": [
+    {
+      "backend": "sorted",
+      "median_ms": 40.804313,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 42.388021,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 46.0966665,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 48.8397085,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 50.7097915,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 67.295167,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 67.716229,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 68.4521665,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 68.930667,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 71.4828745,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 72.3607295,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 74.946687,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 75.6651875,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 79.3006045,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 117.1282705,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 153.5567915,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 154.5274165,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 154.6165415,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 162.4732295,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 175.3850005,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 198.8575625,
+      "runs": 2
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "sorted",
+      "median_ms": 8.2748335,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 9.1387505,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 9.1572705,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 9.481625,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 9.5261045,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 9.541271,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 9.611333,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 9.718375,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 10.387729,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 10.441354,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 10.5532495,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 11.0215,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 11.0934585,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 11.225208,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 11.6680625,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 11.8149165,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 12.1687505,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 12.218708,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 12.68975,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 13.0925205,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 13.604875,
+      "runs": 2
+    }
+  ],
+  "dense": [
+    {
+      "backend": "sorted",
+      "median_ms": 106.315979,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 139.625625,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 143.662646,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 150.2327705,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 151.8875625,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 152.7146255,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 154.090979,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 155.3328755,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 161.999521,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 164.7474795,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 168.4729795,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 175.194979,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 211.172104,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 225.932479,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 264.419479,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 270.515396,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 304.6956455,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 338.213354,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 342.3985415,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 342.859896,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 352.0495625,
+      "runs": 2
+    }
+  ],
+  "large": [
+    {
+      "backend": "sorted",
+      "median_ms": 4.134,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 7.4265,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 7.4310625,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 7.4469165,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 7.4544375,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 7.513333,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 7.6541875,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 7.658375,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 7.679042,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 7.7520835,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 7.867833,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 9.556375,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 9.638146,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 10.7619375,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 10.958042,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 13.520542,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 13.8990625,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 14.349354,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 14.6078125,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 16.771917,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 838.9909585,
+      "runs": 2
+    }
+  ],
+  "churn": [
+    {
+      "backend": "scan",
+      "median_ms": 26.546854,
+      "runs": 2
+    },
+    {
+      "backend": "sorted",
+      "median_ms": 26.936708,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 28.0726665,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 28.5964165,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 29.2978125,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 31.5508545,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 32.0296245,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index2",
+      "median_ms": 32.399292,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 33.4858125,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 33.5456875,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 36.186834,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 36.5083335,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 37.1178335,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 40.518,
+      "runs": 2
+    },
+    {
+      "backend": "tree",
+      "median_ms": 47.458083,
+      "runs": 2
+    },
+    {
+      "backend": "lazy",
+      "median_ms": 54.196146,
+      "runs": 2
+    },
+    {
+      "backend": "keyed",
+      "median_ms": 72.44375,
+      "runs": 2
+    },
+    {
+      "backend": "priority",
+      "median_ms": 72.963875,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map4",
+      "median_ms": 86.8471465,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map8",
+      "median_ms": 89.397,
+      "runs": 2
+    },
+    {
+      "backend": "orx-map2",
+      "median_ms": 92.2064585,
+      "runs": 2
+    }
+  ]
+}

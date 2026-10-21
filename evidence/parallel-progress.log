@@ -1,0 +1,135 @@
+completed 21/294
+completed 42/294
+completed 63/294
+completed 84/294
+completed 105/294
+completed 126/294
+completed 147/294
+completed 168/294
+completed 189/294
+completed 210/294
+completed 231/294
+completed 252/294
+completed 273/294
+completed 294/294
+{
+  "tiny": [
+    {
+      "backend": "scan",
+      "median_ms": 6.3088335,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 7.0610835,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 7.1245415,
+      "runs": 2
+    }
+  ],
+  "small": [
+    {
+      "backend": "sorted",
+      "median_ms": 34.279083,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 38.0163955,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 38.1182085,
+      "runs": 2
+    }
+  ],
+  "coalesce": [
+    {
+      "backend": "sorted",
+      "median_ms": 40.804313,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 42.388021,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 46.0966665,
+      "runs": 2
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "sorted",
+      "median_ms": 8.2748335,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 9.1387505,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 9.1572705,
+      "runs": 2
+    }
+  ],
+  "dense": [
+    {
+      "backend": "sorted",
+      "median_ms": 106.315979,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 139.625625,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 143.662646,
+      "runs": 2
+    }
+  ],
+  "large": [
+    {
+      "backend": "sorted",
+      "median_ms": 4.134,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 7.4265,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index4",
+      "median_ms": 7.4310625,
+      "runs": 2
+    }
+  ],
+  "churn": [
+    {
+      "backend": "scan",
+      "median_ms": 26.546854,
+      "runs": 2
+    },
+    {
+      "backend": "sorted",
+      "median_ms": 26.936708,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 28.0726665,
+      "runs": 2
+    }
+  ]
+}

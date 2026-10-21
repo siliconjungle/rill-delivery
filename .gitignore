@@ -1,0 +1,7 @@
+/target/
+/build/
+/research/cache/
+__pycache__/
+/evidence/cache-retirement.json
+/evidence/workspace-storage-audit.txt
+/evidence/storage-*.json

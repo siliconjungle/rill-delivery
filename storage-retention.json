@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "state": "active",
+  "keep": [
+    {"path": ".git", "reason": "Exact implementation history and reproducibility"},
+    {"path": "src", "reason": "Generic standalone Rust library"},
+    {"path": "tests", "reason": "Independent behavioral proofs"},
+    {"path": "benches", "reason": "Competing algorithms and performance reproduction"},
+    {"path": "tools", "reason": "Fetch, validation and performance reproduction"},
+    {"path": "research", "reason": "Primary-source catalog, source pins and protocol"},
+    {"path": "evidence", "reason": "Selected correctness, performance and storage proofs"}
+  ],
+  "safe_to_remove": []
+}

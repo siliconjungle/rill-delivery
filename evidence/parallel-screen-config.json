@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "phase": "parallel-screen",
+  "binary_sha256": "e2ec313cad69cb3474904b3e365a2a5c6660b38338f3ba7e662db2850a7f3c42",
+  "host": "macOS-26.5.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "python": "3.12.3",
+  "argv": {
+    "binary": "build/queues-screen",
+    "phase": "parallel-screen",
+    "repetitions": 1,
+    "cases": [
+      "tiny",
+      "small",
+      "coalesce",
+      "sparse",
+      "dense",
+      "large",
+      "churn"
+    ],
+    "backends": [
+      "scan",
+      "sorted",
+      "tree",
+      "lazy",
+      "heap2",
+      "heap4",
+      "heap8",
+      "heap16",
+      "hybrid4",
+      "hybrid8",
+      "hybrid16",
+      "hybrid32",
+      "hybrid64",
+      "priority",
+      "keyed",
+      "orx-map2",
+      "orx-map4",
+      "orx-map8",
+      "orx-index2",
+      "orx-index4",
+      "orx-index8"
+    ]
+  },
+  "source_sha256": {
+    "src/lib.rs": "fe39e5ca9c8780dbe370791a7974b6b70390db7bd43afb3667f65bddd7fec7dd",
+    "src/mailbox.rs": "3d192ba4cdaf7979c4579dc208c77e70407153eb269f93eaccae8393bf3e609d",
+    "src/queue.rs": "f338abcbb322383c533d22164c21a07064ffa3b95c692c5effb10b26bd847a11"
+  },
+  "bench_sha256": "5e3074235048f2789285d332465e2e5786ca236b0f08882441e42911bc8b0c72",
+  "driver_sha256": "f4dce50947321274994d328f6f4cf06820382947237d94a695e3521637c925a6",
+  "clock": "Instant wall time; output construction and queue destruction included; output vector verification/destruction outside timing",
+  "other_workers": "left running; parallel screen timings cannot support acceptance claims",
+  "seeds": [
+    71923,
+    61937
+  ]
+}

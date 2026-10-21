@@ -1,0 +1,38 @@
+[package]
+name = "rill-delivery"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Bounded, coalescing, transport-independent delivery scheduling"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/siliconjungle/rill-delivery"
+readme = "README.md"
+
+[features]
+default = []
+comparisons = ["dep:priority-queue", "dep:keyed_priority_queue", "dep:orx-priority-queue", "dep:dary_heap", "dep:binary-heap-plus", "dep:radix-heap"]
+
+[dependencies]
+priority-queue = { version = "=2.7.0", optional = true }
+keyed_priority_queue = { version = "=0.4.2", optional = true }
+orx-priority-queue = { version = "=1.9.0", optional = true }
+dary_heap = { version = "=0.3.9", optional = true }
+binary-heap-plus = { version = "=0.5.0", optional = true }
+radix-heap = { version = "=0.4.2", optional = true }
+
+[[bench]]
+name = "queues"
+harness = false
+required-features = ["comparisons"]
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.release]
+debug = 0
+incremental = false
+
+[profile.bench]
+debug = 0
+incremental = false
