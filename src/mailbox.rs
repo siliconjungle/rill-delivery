@@ -309,11 +309,11 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
     ) -> Result<Offer, Error> {
         self.check(now, &message)?;
         if stream.mailbox != self.id
-            || !self
+            || self
                 .slots
                 .get(stream.slot)
                 .and_then(Option::as_ref)
-                .is_some_and(|s| s.identity == stream.identity)
+                .is_none_or(|s| s.identity != stream.identity)
         {
             return Err(Error::UnknownStream);
         }

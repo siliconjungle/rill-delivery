@@ -116,7 +116,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64, worker: Worker) -> (Metrics, Vec<St
     let mut d = Dispatcher::<u64, Vec<u8>, Q>::new(n, (1 << 30) / shards as u64).unwrap();
     let base = PeerConfig {
         limits: Limits {
-            states: 64,
+            states: width as usize,
             events: 16,
             bytes: 16384,
             max_message_bytes: 128,

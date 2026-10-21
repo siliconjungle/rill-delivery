@@ -3,27 +3,6 @@
 version = 4
 
 [[package]]
-name = "binary-heap-plus"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4551d8382e911ecc0d0f0ffb602777988669be09447d536ff4388d1def11296"
-dependencies = [
- "compare",
-]
-
-[[package]]
-name = "compare"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "120133d4db2ec47efe2e26502ee984747630c67f51974fca0b6c1340cf2368d3"
-
-[[package]]
-name = "dary_heap"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b1e3a325bc115f096c8b77bbf027a7c2592230e70be2d985be950d3d5e60ebe"
-
-[[package]]
 name = "equivalent"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -90,21 +69,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "radix-heap"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59ffec9df464013295b499298811e6a3de31bf8128092135826517db12dee601"
-
-[[package]]
 name = "rill-delivery"
 version = "0.1.0"
 dependencies = [
- "binary-heap-plus",
- "dary_heap",
  "keyed_priority_queue",
  "orx-priority-queue",
  "priority-queue",
- "radix-heap",
 ]
 
 [[package]]

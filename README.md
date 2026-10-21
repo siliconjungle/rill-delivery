@@ -63,6 +63,12 @@ for envelope in outgoing {
 `Receipt::parts/from_parts` support application-owned ACK envelopes without imposing
 a serializer. A `Receipt` is process-local bookkeeping, not a durable session token.
 
+For frequently updated streams, obtain `sender.stream(peer, &key)` after the first
+offer, then call `offer_stream` with the prepared handle. This avoids hashing and
+cloning the key on later offers. Forgetting a stream or disconnecting its recipient
+invalidates the handle. Keeping prepared handles costs additional caller storage;
+their registration and memory costs are included in the comparisons.
+
 ## Contracts that matter
 
 **Replacement state:** each value must be independently applicable. A chain of JSON
@@ -114,6 +120,12 @@ recipient/key relationships, shared encoded payloads, variable byte costs, spars
 activity, slow recipients, FIFO events and correlated retry bursts. Each candidate
 must match the reference's **complete ordered delivery vector** and end with all
 latest revisions acknowledged. A separate declarative model checks the state machine.
+
+The later fixtures compare logical handoff ticks and exact ordering within each
+recipient, permitting independent worker shards without inventing a global delivery
+order between recipients. Workers synchronize every measured frame with barriers;
+their wall times include this coordination. Encoding is once per worker's shared
+publication, not a claim of a single global serialization across workers.
 
 Parallel screens are exploratory. Final comparisons use fresh processes in
 interleaved order. Frozen build receipts bind executable hashes to committed source,

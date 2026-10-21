@@ -14,7 +14,7 @@ args=p.parse_args();label=args.label;bench=args.bench
 if not label.replace('-','').isalnum(): raise SystemExit('invalid label')
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def command(*args): return subprocess.check_output(args,cwd=ROOT,text=True).strip()
-source_paths=[ROOT/'Cargo.toml',ROOT/'Cargo.lock',*sorted((ROOT/'src').glob('*.rs')),ROOT/f'benches/{bench}.rs']
+source_paths=[ROOT/'Cargo.toml',ROOT/'Cargo.lock',ROOT/'README.md',*sorted((ROOT/'src').glob('*.rs')),ROOT/f'benches/{bench}.rs']
 subprocess.run(['git','diff','--exit-code','HEAD','--',*[str(p.relative_to(ROOT)) for p in source_paths]],cwd=ROOT,check=True)
 revision=command('git','rev-parse','HEAD')
 hashes={str(p.relative_to(ROOT)):sha(p) for p in source_paths}
