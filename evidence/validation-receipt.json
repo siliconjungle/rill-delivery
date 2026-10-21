@@ -3,11 +3,11 @@
   "source_sha256": {
     "Cargo.toml": "45e6ab3bde234be14989174bbef05d85fbce40cb2ed1570613e44745bafff206",
     "Cargo.lock": "a84424e9dc9e81be9b2c4f2c94c8f089075b320acbb78217fb45d9911672dadd",
-    "README.md": "e4c0e1f147e57e6759813bafd3e8e1f52e8174572ab7dc17fb315fad098ab2b1",
+    "README.md": "9f24e22a057aebfc0b8f25de851fde020285e217441d42c503be08f648bd66f7",
     "src/budget.rs": "18cda27a47fdfdf7d3381d0e770675d92892936ce7ac77b1314d4fa0b23fbeac",
     "src/dispatcher.rs": "0af68ff7345bb29348e093e70b6ebea6d682898d8f20e6cbd13a8101eee6ea6e",
     "src/lib.rs": "6eb2c068e05bf09486e4e96bea3726a48e20d10c15208ea57e617dd4ffe40a01",
-    "src/mailbox.rs": "19f744d1d08b1cea5f685b6190af79f2596d9557f62a1c3846c57cf267538373",
+    "src/mailbox.rs": "2aafd6f32c093817babb3d07f093dabc5d87bd930d7d0d51a394d5a5bdf65cc1",
     "src/queue.rs": "7e8b4177ddeda143b99a19a448012d04ad47a6c6ee8b9425231e64fca0c793e0",
     "tests/dispatcher.rs": "86642baf3f5a87bc1f4ecf2546b2dd1a116d5c7012de3941b86158529cc593c1",
     "tests/mailbox.rs": "6db145924b4f88a585a2bce895cc9e3e73ec1f4ced90f421cb41940e52e1eee3",
@@ -27,7 +27,7 @@
       ],
       "exit_code": 0,
       "log": "evidence/final-tests-release.log",
-      "log_sha256": "ad72b7ceb37198f1ad910ec636a6c389f7390fa9440a0d55e2c694ca05f1fb96"
+      "log_sha256": "ab4fc025edebca5bcb329cddf4cb66a397c98be47c81746217fb0ddcb2f1293c"
     },
     {
       "name": "clippy",
@@ -43,7 +43,7 @@
       ],
       "exit_code": 0,
       "log": "evidence/final-clippy.log",
-      "log_sha256": "7b5b7d61ee0b46275cfaab21c7013a371f927ae674a78df88add3fa9c506f15e"
+      "log_sha256": "7d0edce33e664ae463716f38c511151d89b68b6cd6afefbca1073eb62e672ecc"
     },
     {
       "name": "format",
@@ -69,7 +69,7 @@
       ],
       "exit_code": 0,
       "log": "evidence/final-msrv.log",
-      "log_sha256": "ef220da15a056dcf06f6083027e9abc457ba8b5b53fbe89e2ba7350ee23170c8"
+      "log_sha256": "699567b002de354da20ca9e7b2781161186a50aa7b12e1991a722ad486663489"
     },
     {
       "name": "example",
@@ -83,7 +83,7 @@
       ],
       "exit_code": 0,
       "log": "evidence/final-example.log",
-      "log_sha256": "34b0e5ba6533e948c0dd18d26c68dc10d3779936f3a30814bd1c5bf69acb79fe"
+      "log_sha256": "b0ea84da00fb5edab818770809aaaaf5c67ca8c30719d8a8b5f31d7d188ed061"
     },
     {
       "name": "normal-dependencies",
@@ -109,7 +109,7 @@
       ],
       "exit_code": 0,
       "log": "evidence/final-package.log",
-      "log_sha256": "72ea23c4542aeaf4782ded69718d584eb2df1c6455852cbc17a254fb2576f8a3"
+      "log_sha256": "202d1e1463af9d3ef78f7bd5c3729b97dd14e3f3176d0c57b1a647f07483913b"
     }
   ],
   "all_passed": true

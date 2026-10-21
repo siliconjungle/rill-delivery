@@ -8,13 +8,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - run: rustup update stable --profile minimal
+      - run: rustup toolchain install stable --profile minimal
       - run: cargo +stable test --locked --all-features --release
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - run: rustup update stable --profile minimal
+      - run: rustup toolchain install stable --profile minimal
       - run: rustup component add clippy rustfmt --toolchain stable
       - run: cargo +stable fmt --all -- --check
       - run: cargo +stable clippy --locked --all-targets --all-features -- -D warnings

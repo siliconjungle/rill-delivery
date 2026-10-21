@@ -205,6 +205,8 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
         {
             return Err(Error::InvalidConfig);
         }
+        // Keep the Rust 1.85 API; newer compilers rename this to try_update.
+        #[allow(deprecated)]
         let id = NEXT_MAILBOX
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
             .map_err(|_| Error::Exhausted)?;

@@ -1,6 +1,6 @@
    Packaging rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
     Updating crates.io index
-    Packaged 39 files, 603.9KiB (141.4KiB compressed)
+    Packaged 43 files, 624.5KiB (147.7KiB compressed)
    Verifying rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
    Compiling rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/target/package/rill-delivery-0.1.0)
-    Finished `dev` profile [unoptimized] target(s) in 0.87s
+    Finished `dev` profile [unoptimized] target(s) in 1.57s
