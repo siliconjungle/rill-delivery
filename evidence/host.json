@@ -1,0 +1,11 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "logical_cpus": 8,
+  "sysctl": {
+    "machdep.cpu.brand_string": "Apple M2",
+    "hw.memsize": "8589934592",
+    "hw.physicalcpu": "8",
+    "hw.logicalcpu": "8"
+  }
+}
