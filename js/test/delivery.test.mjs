@@ -39,3 +39,7 @@ test('retrying a superseded flight preserves its older age and urgency',()=>{
 test('failed admission does not mutate progress and a budget-zero drain cannot exhaust serial space',()=>{
  const m=new Mailbox({bytes:4,maxMessageBytes:4});m.offerState('x',1,msg(1));const [first]=drain(m);assert.throws(()=>m.offerState('x',2,msg(2)),/Capacity/);assert.deepEqual(m.progress('x'),{latest:1,acknowledged:null,pending:null,inFlight:1});m.ack(first.receipt);m.serial=Number.MAX_SAFE_INTEGER;assert.equal(m.drainInto(0,0,0,[]),0);assert.throws(()=>m.offerState('x',2,msg(2)),/Exhausted/);assert.equal(m.bufferedBytes,0);
 });
+
+test('stale and foreign peer reads return null without affecting a replacement',()=>{
+ const d=new Dispatcher(1,64),other=new Dispatcher(1,64),p=d.addPeer({limits:{bytes:64,maxMessageBytes:4}}),foreign=other.addPeer({limits:{bytes:64,maxMessageBytes:4}});d.offerState(p,'x',1,msg(1));d.removePeer(p);const q=d.addPeer({limits:{bytes:64,maxMessageBytes:4}});d.offerState(q,'x',2,msg(2));assert.equal(d.stream(p,'x'),null);assert.equal(d.progress(p,'x'),null);assert.equal(d.stream(foreign,'x'),null);assert.equal(d.progress(foreign,'x'),null);assert.equal(d.progress(q,'x').latest,2);
+});

@@ -1,0 +1,37 @@
+✔ heap4: queue agrees with a sorted independent map under mutation (114.531084ms)
+✔ heap4: state coalesces but an exact attempt survives until ACK or retry (0.900792ms)
+✔ heap4: events stay ordered through retry and cannot coalesce (0.173166ms)
+✔ heap4: budget scans skip a large row and floor decreases when work reactivates (0.127791ms)
+✔ heap8: queue agrees with a sorted independent map under mutation (99.243292ms)
+✔ heap8: state coalesces but an exact attempt survives until ACK or retry (0.200208ms)
+✔ heap8: events stay ordered through retry and cannot coalesce (0.087542ms)
+✔ heap8: budget scans skip a large row and floor decreases when work reactivates (0.07075ms)
+✔ scan: queue agrees with a sorted independent map under mutation (101.453041ms)
+✔ scan: state coalesces but an exact attempt survives until ACK or retry (0.186458ms)
+✔ scan: events stay ordered through retry and cannot coalesce (0.066209ms)
+✔ scan: budget scans skip a large row and floor decreases when work reactivates (0.057833ms)
+✔ cached: queue agrees with a sorted independent map under mutation (101.891625ms)
+✔ cached: state coalesces but an exact attempt survives until ACK or retry (0.469041ms)
+✔ cached: events stay ordered through retry and cannot coalesce (0.070167ms)
+✔ cached: budget scans skip a large row and floor decreases when work reactivates (0.065583ms)
+✔ admission is atomic, priority promotion retains age, counters reject lossy integers (0.225833ms)
+✔ global retained-byte bounds include flights and protect peer incarnations (0.438583ms)
+✔ integer token bucket saturates without overflowing and rejects reversed time (0.067958ms)
+✔ 20,000 peers all converge with bounded service and idle recipients stop polling (44.674542ms)
+✔ retrying a superseded flight preserves its older age and urgency (0.132583ms)
+✔ failed admission does not mutate progress and a budget-zero drain cannot exhaust serial space (0.175209ms)
+✔ stale and foreign peer reads return null without affecting a replacement (0.17225ms)
+✔ complete deterministic mutation traces match Rust for every JS ready queue (151.913458ms)
+✔ reference: exact fair order, payload identity and bounded output across repeated heterogeneous banks (46.241625ms)
+✔ pooled: exact fair order, payload identity and bounded output across repeated heterogeneous banks (34.633208ms)
+✔ linked: exact fair order, payload identity and bounded output across repeated heterogeneous banks (33.592667ms)
+✔ runs: exact fair order, payload identity and bounded output across repeated heterogeneous banks (36.599083ms)
+✔ reentrant key callbacks fail explicitly and temporary references are released on exceptions (0.313458ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 543.942
