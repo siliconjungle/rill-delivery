@@ -35,6 +35,7 @@ shutil.copy2(exe,destination)
 assert all(sha(ROOT/p)==h for p,h in hashes.items()),'source changed while building'
 receipt={'schema':1,'source_commit':revision,'source_sha256':hashes,'binary_sha256':sha(destination),
          'compiler':command('rustc','-Vv'),'cargo':command('cargo','-V'),'build_command':build,
+         'build_environment':{k:v for k,v in os.environ.items() if k in {'RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS','RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTUP_TOOLCHAIN','CARGO_BUILD_TARGET','CARGO_TARGET_DIR','RUSTC'} or k.startswith('CARGO_PROFILE_BENCH_')},
          'executable':str(destination.relative_to(ROOT)),'source_clean_before_build':True}
 (ROOT/'evidence'/f'{label}-build.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print(json.dumps(receipt,indent=2))

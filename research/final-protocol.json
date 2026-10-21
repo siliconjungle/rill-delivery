@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "status": "registered-before-unseen-performance-runs",
+  "development_evidence": ["matrix-592-v6", "delivery-selection-v3"],
+  "default_queue": "SwitchingQueue<4,16>",
+  "default_rationale": "Development winner for prepared eight-worker resident delivery; bounded large-queue heap behavior and no storage-copy demotion. Other measured presets remain selectable.",
+  "finalists": [
+    "heap4", "default", "default-handles", "orx-index2-handles",
+    "default-handles-shards8", "heap8-handles-shards8", "orx-index2-handles-shards8",
+    "default-handles-copied-shards8", "default-handles-shards4",
+    "switch16-64-handles-shards4", "switch16-64-handles-shards2", "heap4-copied"
+  ],
+  "cases": ["fanout", "resident", "sparse", "slow", "loss", "events"],
+  "seeds": [982451653, 961748941],
+  "repetitions": 7,
+  "processes": 1008,
+  "statistical_unit": "Fresh process; frames within a process are not independent replicates",
+  "pairing": "Same case, seed and repetition; shuffled candidate order within each group",
+  "metrics": ["process mean frame wall time", "whole lifecycle wall time", "whole lifecycle process CPU", "summed steady worker CPU", "process peak RSS", "separate instrumented allocations"],
+  "confidence": "Paired log-ratio bootstrap, 10000 resamples, 95 percent intervals; report each seed and pooled process pairs",
+  "proof_requirements": [
+    "Exact complete per-recipient delivery vectors including handoff ticks, payload content and ordered events",
+    "Equal canonical checksum, delivered output count and offered input count across finalists for each case and seed",
+    "Final latest state acknowledged with no pending or in-flight records",
+    "Full expected process coverage without duplicate cells",
+    "Frozen executable and committed source hash verification",
+    "Uninstrumented speed builds; allocation-profile timings cannot enter speed acceptance",
+    "Current library tests, default-feature MSRV, formatting, clippy, standalone package and example checks"
+  ],
+  "claim_rule": "A speedup claim requires the paired interval upper bound below 1.0. Publish all wins, regressions and inconclusive cells. A unique fastest claim additionally requires beating every eligible finalist on that case and metric.",
+  "publication_scope": "Generic Rust source and reproducible evidence on public GitHub. No registry publication, private game source or claim of all-world library superiority.",
+  "limitations": ["Other host workers remain running", "Short fixture frames do not prove sustained network p99", "20000 in-process recipients do not prove 20000 live connections", "Three external queue crates are component comparisons; cataloged full engines are not all benchmarked"]
+}
