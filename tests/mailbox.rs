@@ -209,6 +209,54 @@ fn prepared_streams_survive_updates_but_not_forgetting_or_foreign_mailboxes() {
     assert_eq!(m.progress(&key).unwrap().latest, 1);
 }
 
+#[test]
+fn blocked_budget_then_small_state_retry_and_event_ack_resume() {
+    let mut m = Mailbox::<u64, u64>::new(limits()).unwrap();
+    let mut out = Vec::new();
+    m.offer_state(1, 1, msg(1, 1), 0, 0).unwrap();
+    m.drain_into(0, 1, 1, &mut out).unwrap();
+    let first = out.remove(0).receipt;
+    m.offer_state(2, 1, msg(2, 100), 0, 0).unwrap();
+    assert_eq!(m.drain_into(0, 50, 10, &mut out).unwrap(), 0);
+    assert!(m.retry(first));
+    assert_eq!(m.drain_into(0, 1, 1, &mut out).unwrap(), 1);
+    let retried = out.remove(0).receipt;
+    m.offer_state(1, 2, msg(3, 2), 0, 0).unwrap();
+    assert_eq!(m.drain_into(0, 50, 10, &mut out).unwrap(), 0);
+    assert!(m.ack(retried));
+    assert_eq!(m.drain_into(0, 2, 1, &mut out).unwrap(), 2);
+    assert!(m.ack(out.remove(0).receipt));
+    let event = m.offer_event(msg(4, 1), 0, 0).unwrap();
+    m.drain_into(0, 1, 1, &mut out).unwrap();
+    let e = out.remove(0);
+    assert_eq!(e.kind, Kind::Event { sequence: event });
+    let following = m.offer_event(msg(5, 2), 0, 0).unwrap();
+    assert_eq!(m.drain_into(0, 50, 10, &mut out).unwrap(), 0);
+    assert!(m.ack(e.receipt));
+    assert_eq!(m.drain_into(0, 2, 1, &mut out).unwrap(), 2);
+    assert_eq!(
+        out[0].kind,
+        Kind::Event {
+            sequence: following
+        }
+    );
+}
+
+#[test]
+fn timestamp_overflow_and_zero_work_are_atomic() {
+    let mut m = Mailbox::<u64, u64>::new(limits()).unwrap();
+    assert_eq!(
+        m.offer_state(1, 1, msg(1, 1), 1, u64::MAX),
+        Err(Error::Exhausted)
+    );
+    assert_eq!(m.state_count(), 0);
+    assert_eq!(m.buffered_bytes(), 0);
+    m.offer_state(1, 1, msg(1, 1), 0, 0).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(m.drain_into(0, 1, 0, &mut out).unwrap(), 0);
+    assert_eq!(m.drain_into(0, 1, 1, &mut out).unwrap(), 1);
+}
+
 fn randomized_equivalence<Q: ReadyQueue>() {
     // ScanQueue is separately proven against BTreeMap, then used as a delivery
     // differential oracle across arbitrary scheduling structures and lifecycle churn.

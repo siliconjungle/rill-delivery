@@ -81,6 +81,9 @@ handoff. Frontier remains useful for this encoding layer; see the
 released after ACK; unrelated state can still proceed. Retries preserve the event's
 sequence, enabling receiver deduplication. Event sequences increase but can have gaps.
 Exactly-once receiver side effects and durable recovery are application concerns.
+Receivers must reject older state revisions and deduplicate retried event sequences
+before acknowledging application. Scope that receiver progress to the connection's
+session incarnation; this library does not define a reconnect handshake or wire codec.
 
 **Time and priorities:** supply monotonically increasing `u64` ticks in your chosen
 unit. A priority delay is an urgency/age offset, not a future release time. All queued

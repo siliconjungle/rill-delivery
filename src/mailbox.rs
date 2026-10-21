@@ -192,8 +192,8 @@ pub struct Mailbox<K, T: ?Sized, Q: ReadyQueue = IndexedHeap<4>> {
     bytes: u64,
     serial: u64,
     now: u64,
-    // Conservative lower bound across buffered messages. It may stay lower
-    // after replacement/removal, but can never suppress a fitting message.
+    // Conservative lower bound for ready messages. A complete unsuccessful scan
+    // can raise it; every transition that activates work lowers it as necessary.
     cost_floor: u32,
 }
 
@@ -487,6 +487,8 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
         let mut remaining = budget;
         let mut sent = 0;
         let mut event_blocked = false;
+        let mut observed_min = u32::MAX;
+        let mut complete_scan = false;
         self.deferred.clear();
         while sent < max_items && remaining > 0 {
             let state = self.ready.peek();
@@ -502,6 +504,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
             if choose_event {
                 let event = self.events.front_mut().unwrap();
                 if u64::from(event.value.message.bytes) > remaining {
+                    observed_min = observed_min.min(event.value.message.bytes);
                     event_blocked = true;
                     continue;
                 }
@@ -526,6 +529,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                 self.ready.pop();
                 let slot = self.slots[entry.id].as_mut().unwrap();
                 if u64::from(slot.pending.as_ref().unwrap().message.bytes) > remaining {
+                    observed_min = observed_min.min(slot.pending.as_ref().unwrap().message.bytes);
                     self.deferred.push(entry);
                     continue;
                 }
@@ -549,12 +553,16 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                 });
                 slot.flight = Some(Flight { receipt, value });
             } else {
+                complete_scan = true;
                 break;
             }
             sent += 1;
         }
         for entry in self.deferred.drain(..) {
             self.ready.upsert(entry);
+        }
+        if sent == 0 && complete_scan {
+            self.cost_floor = observed_min;
         }
         Ok(budget - remaining)
     }
@@ -571,6 +579,9 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                 .is_some_and(|e| e.flight == Some(receipt))
             {
                 self.bytes -= u64::from(self.events.pop_front().unwrap().value.message.bytes);
+                if let Some(next) = self.events.front() {
+                    self.cost_floor = self.cost_floor.min(next.value.message.bytes);
+                }
                 if self.bytes == 0 {
                     self.cost_floor = u32::MAX;
                 }
@@ -585,6 +596,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                 }
                 state.acknowledged = Some(f.value.revision);
                 if let Some(value) = &state.pending {
+                    self.cost_floor = self.cost_floor.min(value.message.bytes);
                     self.ready.upsert(Entry {
                         id: receipt.slot,
                         rank: value.rank,
@@ -607,6 +619,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
             if let Some(e) = self.events.front_mut() {
                 if e.flight == Some(receipt) {
                     e.flight = None;
+                    self.cost_floor = self.cost_floor.min(e.value.message.bytes);
                     return true;
                 }
             }
@@ -624,6 +637,9 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                     id: receipt.slot,
                     rank: state.pending.as_ref().unwrap().rank,
                 });
+                self.cost_floor = self
+                    .cost_floor
+                    .min(state.pending.as_ref().unwrap().message.bytes);
                 return true;
             }
         }
