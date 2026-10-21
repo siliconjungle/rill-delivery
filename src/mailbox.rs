@@ -56,11 +56,11 @@ impl Default for Limits {
 
 /// Immutable shared payload plus its conservatively estimated wire cost.
 /// Sharing is opt-in: construct once and clone across recipients.
-pub struct Message<T> {
+pub struct Message<T: ?Sized> {
     pub payload: Arc<T>,
     bytes: u32,
 }
-impl<T> Clone for Message<T> {
+impl<T: ?Sized> Clone for Message<T> {
     fn clone(&self) -> Self {
         Self {
             payload: self.payload.clone(),
@@ -68,7 +68,7 @@ impl<T> Clone for Message<T> {
         }
     }
 }
-impl<T> Message<T> {
+impl<T: ?Sized> Message<T> {
     pub fn new(payload: Arc<T>, bytes: u32) -> Result<Self, Error> {
         if bytes == 0 {
             return Err(Error::InvalidConfig);
@@ -115,7 +115,7 @@ pub enum Kind<K> {
     Event { sequence: u64 },
 }
 
-pub struct Delivery<K, T> {
+pub struct Delivery<K, T: ?Sized> {
     pub receipt: Receipt,
     pub kind: Kind<K>,
     pub message: Message<T>,
@@ -137,24 +137,24 @@ pub struct Progress {
     pub in_flight: Option<u64>,
 }
 
-struct Value<T> {
+struct Value<T: ?Sized> {
     revision: u64,
     rank: Rank,
     queued_at: u64,
     message: Message<T>,
 }
-struct Flight<T> {
+struct Flight<T: ?Sized> {
     receipt: Receipt,
     value: Value<T>,
 }
-struct State<K, T> {
+struct State<K, T: ?Sized> {
     key: K,
     latest: u64,
     acknowledged: Option<u64>,
     pending: Option<Value<T>>,
     flight: Option<Flight<T>>,
 }
-struct Event<T> {
+struct Event<T: ?Sized> {
     value: Value<T>,
     flight: Option<Receipt>,
 }
@@ -163,7 +163,7 @@ struct Event<T> {
 /// All methods are synchronous. Shard mailboxes across threads rather than locking
 /// a global queue in the core. A state key is a stream of *replacement snapshots*,
 /// not a chain of patches that depend on skipped revisions.
-pub struct Mailbox<K, T, Q: ReadyQueue = IndexedHeap<4>> {
+pub struct Mailbox<K, T: ?Sized, Q: ReadyQueue = IndexedHeap<4>> {
     id: u64,
     limits: Limits,
     keys: HashMap<K, usize>,
@@ -175,9 +175,12 @@ pub struct Mailbox<K, T, Q: ReadyQueue = IndexedHeap<4>> {
     bytes: u64,
     serial: u64,
     now: u64,
+    // Conservative lower bound across buffered messages. It may stay lower
+    // after replacement/removal, but can never suppress a fitting message.
+    cost_floor: u32,
 }
 
-impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
+impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
     pub fn new(limits: Limits) -> Result<Self, Error> {
         if limits.bytes == 0
             || limits.max_message_bytes == 0
@@ -200,6 +203,7 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
             bytes: 0,
             serial: 0,
             now: 0,
+            cost_floor: u32::MAX,
         })
     }
     fn check(&self, now: u64, message: &Message<T>) -> Result<(), Error> {
@@ -257,6 +261,7 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
         let old_bytes = index
             .and_then(|i| self.slots[i].as_ref()?.pending.as_ref())
             .map_or(0, |p| u64::from(p.message.bytes));
+        let cost = message.bytes;
         if u64::from(message.bytes).saturating_sub(old_bytes) > headroom {
             return Err(Error::Capacity);
         }
@@ -316,6 +321,7 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
             });
         }
         self.bytes = total;
+        self.cost_floor = self.cost_floor.min(cost);
         self.serial = serial;
         self.now = now;
         Ok(outcome)
@@ -352,6 +358,9 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
             flight: None,
         });
         self.bytes = total;
+        self.cost_floor = self
+            .cost_floor
+            .min(self.events.back().unwrap().value.message.bytes);
         self.serial = serial;
         self.now = now;
         Ok(serial)
@@ -371,8 +380,13 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
         if now < self.now {
             return Err(Error::ClockWentBack);
         }
+        if budget < u64::from(self.cost_floor) {
+            self.now = now;
+            return Ok(0);
+        }
         // Reserve enough serial space up front, including attempts later skipped.
-        let attempts = max_items.min(self.ready.len().saturating_add(1));
+        let event_ready = usize::from(self.events.front().is_some_and(|e| e.flight.is_none()));
+        let attempts = max_items.min(self.ready.len().saturating_add(event_ready));
         self.serial
             .checked_add(u64::try_from(attempts).map_err(|_| Error::Exhausted)?)
             .ok_or(Error::Exhausted)?;
@@ -464,12 +478,18 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
                 .is_some_and(|e| e.flight == Some(receipt))
             {
                 self.bytes -= u64::from(self.events.pop_front().unwrap().value.message.bytes);
+                if self.bytes == 0 {
+                    self.cost_floor = u32::MAX;
+                }
                 return true;
             }
         } else if let Some(Some(state)) = self.slots.get_mut(receipt.slot) {
             if state.flight.as_ref().is_some_and(|f| f.receipt == receipt) {
                 let f = state.flight.take().unwrap();
                 self.bytes -= u64::from(f.value.message.bytes);
+                if self.bytes == 0 {
+                    self.cost_floor = u32::MAX;
+                }
                 state.acknowledged = Some(f.value.revision);
                 if let Some(value) = &state.pending {
                     self.ready.upsert(Entry {
@@ -533,6 +553,9 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
         }
         self.ready.remove(i);
         self.free.push(i);
+        if self.bytes == 0 {
+            self.cost_floor = u32::MAX;
+        }
         true
     }
     pub fn progress(&self, key: &K) -> Option<Progress> {

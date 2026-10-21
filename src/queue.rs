@@ -469,6 +469,116 @@ impl<const N: usize> ReadyQueue for AdaptiveQueue<N> {
     }
 }
 
+/// One packed allocation, with scan/heap hysteresis. A drained large queue returns
+/// to the small-queue path without copying entries or discarding reserved storage.
+/// LOW < HIGH avoids repeated heapification around a single size boundary.
+pub struct SwitchingQueue<const LOW: usize = 8, const HIGH: usize = 32> {
+    inner: IndexedHeap<4>,
+    heap: bool,
+    minimum: Option<Entry>,
+    valid: bool,
+}
+impl<const LOW: usize, const HIGH: usize> Default for SwitchingQueue<LOW, HIGH> {
+    fn default() -> Self {
+        assert!(LOW < HIGH && HIGH >= 2);
+        Self {
+            inner: IndexedHeap::default(),
+            heap: false,
+            minimum: None,
+            valid: true,
+        }
+    }
+}
+impl<const LOW: usize, const HIGH: usize> SwitchingQueue<LOW, HIGH> {
+    fn demote(&mut self) {
+        if self.inner.len() <= LOW {
+            self.heap = false;
+            self.minimum = self.inner.heap.first().copied();
+            self.valid = true;
+        }
+    }
+    fn scan_remove(&mut self, id: usize) {
+        let Some(&at) = self.inner.positions.get(id) else {
+            return;
+        };
+        if at == usize::MAX {
+            return;
+        }
+        self.inner.heap.swap_remove(at);
+        self.inner.positions[id] = usize::MAX;
+        if at < self.inner.heap.len() {
+            self.inner.positions[self.inner.heap[at].id] = at;
+        }
+        if self.minimum.is_some_and(|e| e.id == id) {
+            self.valid = false;
+        }
+    }
+}
+impl<const LOW: usize, const HIGH: usize> ReadyQueue for SwitchingQueue<LOW, HIGH> {
+    fn upsert(&mut self, e: Entry) {
+        if self.heap {
+            self.inner.upsert(e);
+            return;
+        }
+        if self.inner.positions.len() <= e.id {
+            self.inner.positions.resize(e.id + 1, usize::MAX);
+        }
+        let at = self.inner.positions[e.id];
+        let old = if at == usize::MAX {
+            self.inner.positions[e.id] = self.inner.heap.len();
+            self.inner.heap.push(e);
+            None
+        } else {
+            Some(std::mem::replace(&mut self.inner.heap[at], e))
+        };
+        if self.valid {
+            if self.minimum.is_none_or(|m| e < m) {
+                self.minimum = Some(e);
+            } else if old == self.minimum && old != Some(e) {
+                self.valid = false;
+            }
+        }
+        if self.inner.len() >= HIGH {
+            for at in (0..=(self.inner.len() - 2) / 4).rev() {
+                self.inner.down(at);
+            }
+            self.heap = true;
+        }
+    }
+    fn remove(&mut self, id: usize) {
+        if self.heap {
+            self.inner.remove(id);
+            self.demote();
+        } else {
+            self.scan_remove(id);
+        }
+    }
+    fn peek(&mut self) -> Option<Entry> {
+        if self.heap {
+            return self.inner.peek();
+        }
+        if !self.valid {
+            self.minimum = self.inner.heap.iter().min().copied();
+            self.valid = true;
+        }
+        self.minimum
+    }
+    fn pop(&mut self) -> Option<Entry> {
+        if self.heap {
+            let e = self.inner.pop();
+            self.demote();
+            e
+        } else {
+            let e = self.peek()?;
+            self.scan_remove(e.id);
+            Some(e)
+        }
+    }
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+}
+
 /// Sorted-on-demand batches; mutations invalidate the sorted run.
 #[derive(Default)]
 pub struct SortedQueue {

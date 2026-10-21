@@ -15,6 +15,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKENDS = "scan sorted tree lazy heap2 heap4 heap8 heap16 hybrid4 hybrid8 hybrid16 hybrid32 hybrid64 priority keyed orx-map2 orx-map4 orx-map8 orx-index2 orx-index4 orx-index8 cached-scan tournament cached4 cached8 cached16 cached32 cached64 adaptive4 adaptive8 adaptive16 adaptive32".split()
+BACKENDS += "switch0-8 switch4-16 switch8-32 switch16-64 switch4-32".split()
 CASES = "tiny small coalesce sparse dense large churn interleave deep-interleave".split()
 
 def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()

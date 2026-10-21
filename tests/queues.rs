@@ -2,6 +2,34 @@ use rill_delivery::queue::*;
 use std::collections::BTreeMap;
 
 fn check<Q: ReadyQueue>() {
+    for width in [1, 2, 3, 4, 8, 16, 32, 64, 128] {
+        let mut q = Q::default();
+        let mut model = BTreeMap::new();
+        for round in 0..16 {
+            for id in 0..width {
+                let e = Entry {
+                    id,
+                    rank: Rank {
+                        due: ((id * 31 + round) % 17) as u64,
+                        order: round as u64,
+                    },
+                };
+                q.upsert(e);
+                model.insert(id, e);
+            }
+            for id in (0..width).step_by(3) {
+                q.remove(id);
+                model.remove(&id);
+            }
+            while !model.is_empty() {
+                let expected = model.values().min().copied().unwrap();
+                assert_eq!(q.peek(), Some(expected));
+                assert_eq!(q.pop(), Some(expected));
+                model.remove(&expected.id);
+            }
+            assert_eq!(q.pop(), None);
+        }
+    }
     for seed in 1..=24 {
         let mut random = seed * 81239;
         let mut next = || {
@@ -61,6 +89,11 @@ macro_rules! prove {
 prove!(scan, ScanQueue);
 prove!(cached_scan, CachedScan);
 prove!(tournament, Tournament);
+prove!(switch0_8,SwitchingQueue<0,8>);
+prove!(switch4_16,SwitchingQueue<4,16>);
+prove!(switch8_32,SwitchingQueue<8,32>);
+prove!(switch16_64,SwitchingQueue<16,64>);
+prove!(switch4_32,SwitchingQueue<4,32>);
 prove!(adaptive4, AdaptiveQueue<4>);
 prove!(adaptive8, AdaptiveQueue<8>);
 prove!(adaptive16, AdaptiveQueue<16>);

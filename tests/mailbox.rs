@@ -5,6 +5,32 @@ use std::sync::Arc;
 fn msg(value: u64, bytes: u32) -> Message<u64> {
     Message::new(Arc::new(value), bytes).unwrap()
 }
+#[test]
+fn unsized_payloads_and_small_budget_then_replacement() {
+    let mut m = Mailbox::<String, [u8]>::new(limits()).unwrap();
+    m.offer_state(
+        "record".into(),
+        1,
+        Message::new(Arc::<[u8]>::from([1u8; 100]), 100).unwrap(),
+        0,
+        0,
+    )
+    .unwrap();
+    let mut out = Vec::new();
+    assert_eq!(m.drain_into(0, 99, usize::MAX, &mut out).unwrap(), 0);
+    m.offer_state(
+        "record".into(),
+        2,
+        Message::new(Arc::<[u8]>::from([2u8; 10]), 10).unwrap(),
+        0,
+        0,
+    )
+    .unwrap();
+    assert_eq!(m.drain_into(0, 10, usize::MAX, &mut out).unwrap(), 10);
+    assert_eq!(&*out[0].message.payload, &[2u8; 10]);
+    assert!(m.ack(out.remove(0).receipt));
+    assert_eq!(m.drain_into(0, u64::MAX, usize::MAX, &mut out).unwrap(), 0);
+}
 fn limits() -> Limits {
     Limits {
         states: 64,

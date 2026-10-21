@@ -304,3 +304,9 @@ fn independent_model_adaptive() {
         prove::<AdaptiveQueue<8>>(seed);
     }
 }
+#[test]
+fn independent_model_switching() {
+    for seed in [41, 71923, 961748941] {
+        prove::<SwitchingQueue<8, 32>>(seed);
+    }
+}

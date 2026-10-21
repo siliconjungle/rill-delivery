@@ -43,18 +43,18 @@ pub struct DispatchStats {
     pub visits: usize,
     pub ready_peers: usize,
 }
-pub struct Envelope<K, T> {
+pub struct Envelope<K, T: ?Sized> {
     pub peer: Peer,
     pub delivery: Delivery<K, T>,
 }
 
-struct Recipient<K, T, Q: ReadyQueue> {
+struct Recipient<K, T: ?Sized, Q: ReadyQueue> {
     mailbox: Mailbox<K, T, Q>,
     bucket: TokenBucket,
     quantum: u64,
     deficit: u64,
 }
-struct Slot<K, T, Q: ReadyQueue> {
+struct Slot<K, T: ?Sized, Q: ReadyQueue> {
     value: Option<Recipient<K, T, Q>>,
     identity: u64,
     // Intrusive active list: disconnect is O(1) and cannot leave stale queue entries.
@@ -66,7 +66,7 @@ struct Slot<K, T, Q: ReadyQueue> {
 /// Bounded multi-recipient scheduler with an intrusive active list and byte-credit
 /// fairness. Each call visits a recipient at most once; inactive recipients consume
 /// no polling work. Rate-limited active recipients can still consume one visit.
-pub struct Dispatcher<K, T, Q: ReadyQueue = IndexedHeap<4>> {
+pub struct Dispatcher<K, T: ?Sized, Q: ReadyQueue = IndexedHeap<4>> {
     peers: Vec<Slot<K, T, Q>>,
     free: Vec<usize>,
     count: usize,
@@ -79,7 +79,7 @@ pub struct Dispatcher<K, T, Q: ReadyQueue = IndexedHeap<4>> {
     now: u64,
     scratch: Vec<Delivery<K, T>>,
 }
-impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Dispatcher<K, T, Q> {
+impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Dispatcher<K, T, Q> {
     pub fn new(max_peers: usize, max_buffered_bytes: u64) -> Result<Self, Error> {
         if max_peers == 0 || max_buffered_bytes == 0 {
             return Err(Error::InvalidConfig);
