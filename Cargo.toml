@@ -7,6 +7,7 @@ description = "Bounded, coalescing, transport-independent delivery scheduling"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/siliconjungle/rill-delivery"
 readme = "README.md"
+include = ["src/**", "tests/*.rs", "examples/*.rs", "benches/**", "tools/*.py", "research/*.md", "research/*.json", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE-*"]
 
 [features]
 default = []
