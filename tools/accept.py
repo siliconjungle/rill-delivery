@@ -74,7 +74,7 @@ def validate_bindings(label, binary, plan_path):
         check_digest(hashlib.sha256(original).hexdigest(), digest, 'committed build input ' + path)
         if path.startswith(('src/', 'benches/')) or path in ('Cargo.toml', 'Cargo.lock'):
             current = (ROOT / path).read_bytes()
-            if path == 'src/mailbox.rs':
+            if path == 'src/mailbox.rs' and hashlib.sha256(current).hexdigest() != digest:
                 # This exact lint-only compatibility annotation preserves the 1.85 API.
                 # Removing it must recover every byte of the measured implementation.
                 annotation = b'        // Keep the Rust 1.85 API; newer compilers rename this to try_update.\n        #[allow(deprecated)]\n'
