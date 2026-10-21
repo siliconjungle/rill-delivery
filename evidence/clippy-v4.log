@@ -1,0 +1,26 @@
+    Checking rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
+error: this boolean expression can be simplified
+   --> src/mailbox.rs:312:16
+    |
+312 |               || !self
+    |  ________________^
+313 | |                 .slots
+314 | |                 .get(stream.slot)
+315 | |                 .and_then(Option::as_ref)
+316 | |                 .is_some_and(|s| s.identity == stream.identity)
+    | |_______________________________________________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.96.0/index.html#nonminimal_bool
+    = note: `-D clippy::nonminimal-bool` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::nonminimal_bool)]`
+help: try
+    |
+312 ~             || self
+313 +                 .slots
+314 +                 .get(stream.slot)
+315 +                 .and_then(Option::as_ref).is_none_or(|s| s.identity != stream.identity)
+    |
+
+error: could not compile `rill-delivery` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `rill-delivery` (lib) due to 1 previous error

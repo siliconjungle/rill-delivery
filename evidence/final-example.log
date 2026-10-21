@@ -1,0 +1,4 @@
+   Compiling rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
+    Finished `release` profile [optimized] target(s) in 0.96s
+     Running `target/release/examples/shards`
+confirmed 20000 deliveries across four independent owners

@@ -1,0 +1,3450 @@
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:1:
+-use rill_delivery::queue::{*, external::*};
+-use std::collections::{BTreeMap,BTreeSet};
++use rill_delivery::queue::{external::*, *};
++use std::collections::{BTreeMap, BTreeSet};
+ use std::hint::black_box;
+ use std::time::Instant;
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:6:
+ #[derive(Clone, Copy)]
+-enum Op { Put(usize,Entry), Remove(usize,usize), Pop(usize) }
+-struct Trace { peers: usize, width: usize, ops: Vec<Op> }
++enum Op {
++    Put(usize, Entry),
++    Remove(usize, usize),
++    Pop(usize),
++}
++struct Trace {
++    peers: usize,
++    width: usize,
++    ops: Vec<Op>,
++}
+ 
+ fn fixture(case: &str, mut rng: u64) -> Trace {
+-    let (peers,width,rounds) = match case {
+-        "tiny" => (20000,4,4), "small" => (20000,16,3),
+-        "coalesce" => (20000,16,3), "sparse" => (20000,64,4),
+-        "dense" => (20000,64,2), "large" => (1,20000,4),
+-        "churn" => (20000,16,3), "interleave"=>(20000,32,2),
+-        "deep-interleave"=>(1,2048,2), _ => panic!("unknown case"),
++    let (peers, width, rounds) = match case {
++        "tiny" => (20000, 4, 4),
++        "small" => (20000, 16, 3),
++        "coalesce" => (20000, 16, 3),
++        "sparse" => (20000, 64, 4),
++        "dense" => (20000, 64, 2),
++        "large" => (1, 20000, 4),
++        "churn" => (20000, 16, 3),
++        "interleave" => (20000, 32, 2),
++        "deep-interleave" => (1, 2048, 2),
++        _ => panic!("unknown case"),
+     };
+-    let mut next = || { rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17; rng };
+-    let mut ops = Vec::new(); let mut order = 0;
++    let mut next = || {
++        rng ^= rng << 13;
++        rng ^= rng >> 7;
++        rng ^= rng << 17;
++        rng
++    };
++    let mut ops = Vec::new();
++    let mut order = 0;
+     if case.ends_with("interleave") {
+-        for peer in 0..peers {for id in 0..width {
+-            order+=1;ops.push(Op::Put(peer,Entry {id,rank:Rank {due:next()%256,order}}));
+-        }}
++        for peer in 0..peers {
++            for id in 0..width {
++                order += 1;
++                ops.push(Op::Put(
++                    peer,
++                    Entry {
++                        id,
++                        rank: Rank {
++                            due: next() % 256,
++                            order,
++                        },
++                    },
++                ));
++            }
++        }
+     }
+     for round in 0..rounds {
+         for peer in 0..peers {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:27:
+-            if case == "sparse" && peer % 97 != 0 { continue; }
++            if case == "sparse" && peer % 97 != 0 {
++                continue;
++            }
+             for id in 0..width {
+                 order += 1;
+-                let e = Entry { id, rank: Rank { due: next() % 256 + round * 100, order } };
+-                ops.push(Op::Put(peer,e));
++                let e = Entry {
++                    id,
++                    rank: Rank {
++                        due: next() % 256 + round * 100,
++                        order,
++                    },
++                };
++                ops.push(Op::Put(peer, e));
+                 if case == "coalesce" {
+-                    for _ in 0..2 { order += 1; ops.push(Op::Put(peer,Entry { rank:Rank {due:next()%256,order},..e})); }
++                    for _ in 0..2 {
++                        order += 1;
++                        ops.push(Op::Put(
++                            peer,
++                            Entry {
++                                rank: Rank {
++                                    due: next() % 256,
++                                    order,
++                                },
++                                ..e
++                            },
++                        ));
++                    }
+                 }
+-                if case == "churn" && id % 3 == 0 { ops.push(Op::Remove(peer,id)); }
+-                if case.ends_with("interleave") && id%2==0 {ops.push(Op::Pop(peer));}
++                if case == "churn" && id % 3 == 0 {
++                    ops.push(Op::Remove(peer, id));
++                }
++                if case.ends_with("interleave") && id % 2 == 0 {
++                    ops.push(Op::Pop(peer));
++                }
+             }
+-            if !case.ends_with("interleave") {for _ in 0..width / 2 { ops.push(Op::Pop(peer)); }}
++            if !case.ends_with("interleave") {
++                for _ in 0..width / 2 {
++                    ops.push(Op::Pop(peer));
++                }
++            }
+         }
+     }
+-    for peer in 0..peers { for _ in 0..width { ops.push(Op::Pop(peer)); } }
+-    Trace { peers,width,ops }
++    for peer in 0..peers {
++        for _ in 0..width {
++            ops.push(Op::Pop(peer));
++        }
++    }
++    Trace { peers, width, ops }
+ }
+ 
+-fn oracle(trace: &Trace) -> Vec<(usize,Option<Entry>)> {
+-    let mut maps = vec![BTreeMap::<usize,Entry>::new();trace.peers];
+-    let mut orders = vec![BTreeSet::<Entry>::new();trace.peers];
++fn oracle(trace: &Trace) -> Vec<(usize, Option<Entry>)> {
++    let mut maps = vec![BTreeMap::<usize, Entry>::new(); trace.peers];
++    let mut orders = vec![BTreeSet::<Entry>::new(); trace.peers];
+     let mut out = Vec::new();
+     for &op in &trace.ops {
+         match op {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:51:
+-            Op::Put(p,e) => {
+-                if let Some(old) = maps[p].insert(e.id,e) { orders[p].remove(&old); }
++            Op::Put(p, e) => {
++                if let Some(old) = maps[p].insert(e.id, e) {
++                    orders[p].remove(&old);
++                }
+                 orders[p].insert(e);
+             }
+-            Op::Remove(p,id) => { if let Some(old) = maps[p].remove(&id) { orders[p].remove(&old); } }
++            Op::Remove(p, id) => {
++                if let Some(old) = maps[p].remove(&id) {
++                    orders[p].remove(&old);
++                }
++            }
+             Op::Pop(p) => {
+                 let e = orders[p].pop_first();
+-                if let Some(e) = e { maps[p].remove(&e.id); }
+-                out.push((p,e));
++                if let Some(e) = e {
++                    maps[p].remove(&e.id);
++                }
++                out.push((p, e));
+             }
+         }
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:63:
+     out
+ }
+ 
+-fn run<Q: ReadyQueue>(trace: &Trace, expected: &[(usize,Option<Entry>)]) -> (u128,u64,usize) {
++fn run<Q: ReadyQueue>(trace: &Trace, expected: &[(usize, Option<Entry>)]) -> (u128, u64, usize) {
+     // Includes all queue allocation, promotions, compaction and final draining.
+     // The input trace and independent expected vector are prepared outside timing.
+     let start = Instant::now();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:70:
+-    let mut queues: Vec<Q> = (0..trace.peers).map(|_| Q::with_bound(trace.width)).collect();
++    let mut queues: Vec<Q> = (0..trace.peers)
++        .map(|_| Q::with_bound(trace.width))
++        .collect();
+     let mut actual = Vec::with_capacity(expected.len());
+     let mut checksum = 0u64;
+     for &op in black_box(&trace.ops) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:74:
+         match op {
+-            Op::Put(p,e) => queues[p].upsert(black_box(e)),
+-            Op::Remove(p,id) => queues[p].remove(black_box(id)),
++            Op::Put(p, e) => queues[p].upsert(black_box(e)),
++            Op::Remove(p, id) => queues[p].remove(black_box(id)),
+             Op::Pop(p) => {
+                 let e = queues[p].pop();
+-                if let Some(e) = e { checksum = checksum.wrapping_mul(31).wrapping_add(e.rank.due ^ e.rank.order ^ e.id as u64 ^ p as u64); }
+-                actual.push((p,e));
++                if let Some(e) = e {
++                    checksum = checksum
++                        .wrapping_mul(31)
++                        .wrapping_add(e.rank.due ^ e.rank.order ^ e.id as u64 ^ p as u64);
++                }
++                actual.push((p, e));
+             }
+         }
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:85:
+     drop(queues);
+     black_box(checksum);
+     let elapsed = start.elapsed().as_nanos();
+-    assert_eq!(actual,expected,"complete ordered output differs from independent BTreeMap oracle");
+-    (elapsed,checksum,actual.len())
++    assert_eq!(
++        actual, expected,
++        "complete ordered output differs from independent BTreeMap oracle"
++    );
++    (elapsed, checksum, actual.len())
+ }
+ 
+ fn main() {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/benches/queues.rs:93:
+     let a: Vec<_> = std::env::args().collect();
+-    if a.len() < 4 { panic!("usage: queues BACKEND CASE SEED"); }
+-    let backend = &a[1]; let case = &a[2]; let seed = a[3].parse::<u64>().unwrap();
+-    let trace = fixture(case,seed);
++    if a.len() < 4 {
++        panic!("usage: queues BACKEND CASE SEED");
++    }
++    let backend = &a[1];
++    let case = &a[2];
++    let seed = a[3].parse::<u64>().unwrap();
++    let trace = fixture(case, seed);
+     let expected = oracle(&trace);
+-    let (ns,checksum,outputs) = match backend.as_str() {
+-        "scan"=>run::<ScanQueue>(&trace,&expected), "sorted"=>run::<SortedQueue>(&trace,&expected),
+-        "cached-scan"=>run::<CachedScan>(&trace,&expected),"tournament"=>run::<Tournament>(&trace,&expected),
+-        "cached4"=>run::<CachedHybrid<4>>(&trace,&expected),"cached8"=>run::<CachedHybrid<8>>(&trace,&expected),
+-        "cached16"=>run::<CachedHybrid<16>>(&trace,&expected),"cached32"=>run::<CachedHybrid<32>>(&trace,&expected),
+-        "cached64"=>run::<CachedHybrid<64>>(&trace,&expected),
+-        "adaptive4"=>run::<AdaptiveQueue<4>>(&trace,&expected),"adaptive8"=>run::<AdaptiveQueue<8>>(&trace,&expected),
+-        "adaptive16"=>run::<AdaptiveQueue<16>>(&trace,&expected),"adaptive32"=>run::<AdaptiveQueue<32>>(&trace,&expected),
+-        "tree"=>run::<TreeQueue>(&trace,&expected), "lazy"=>run::<LazyHeap>(&trace,&expected),
+-        "heap2"=>run::<IndexedHeap<2>>(&trace,&expected), "heap4"=>run::<IndexedHeap<4>>(&trace,&expected),
+-        "heap8"=>run::<IndexedHeap<8>>(&trace,&expected), "heap16"=>run::<IndexedHeap<16>>(&trace,&expected),
+-        "hybrid4"=>run::<Hybrid<4>>(&trace,&expected), "hybrid8"=>run::<Hybrid<8>>(&trace,&expected),
+-        "hybrid16"=>run::<Hybrid<16>>(&trace,&expected), "hybrid32"=>run::<Hybrid<32>>(&trace,&expected),
+-        "hybrid64"=>run::<Hybrid<64>>(&trace,&expected), "priority"=>run::<Priority>(&trace,&expected),
+-        "keyed"=>run::<Keyed>(&trace,&expected), "orx-map2"=>run::<OrxMap<2>>(&trace,&expected),
+-        "orx-map4"=>run::<OrxMap<4>>(&trace,&expected), "orx-map8"=>run::<OrxMap<8>>(&trace,&expected),
+-        "orx-index2"=>run::<OrxIndex<2>>(&trace,&expected), "orx-index4"=>run::<OrxIndex<4>>(&trace,&expected),
+-        "orx-index8"=>run::<OrxIndex<8>>(&trace,&expected), _=>panic!("unknown backend")
++    let (ns, checksum, outputs) = match backend.as_str() {
++        "scan" => run::<ScanQueue>(&trace, &expected),
++        "sorted" => run::<SortedQueue>(&trace, &expected),
++        "cached-scan" => run::<CachedScan>(&trace, &expected),
++        "tournament" => run::<Tournament>(&trace, &expected),
++        "cached4" => run::<CachedHybrid<4>>(&trace, &expected),
++        "cached8" => run::<CachedHybrid<8>>(&trace, &expected),
++        "cached16" => run::<CachedHybrid<16>>(&trace, &expected),
++        "cached32" => run::<CachedHybrid<32>>(&trace, &expected),
++        "cached64" => run::<CachedHybrid<64>>(&trace, &expected),
++        "adaptive4" => run::<AdaptiveQueue<4>>(&trace, &expected),
++        "adaptive8" => run::<AdaptiveQueue<8>>(&trace, &expected),
++        "adaptive16" => run::<AdaptiveQueue<16>>(&trace, &expected),
++        "adaptive32" => run::<AdaptiveQueue<32>>(&trace, &expected),
++        "tree" => run::<TreeQueue>(&trace, &expected),
++        "lazy" => run::<LazyHeap>(&trace, &expected),
++        "heap2" => run::<IndexedHeap<2>>(&trace, &expected),
++        "heap4" => run::<IndexedHeap<4>>(&trace, &expected),
++        "heap8" => run::<IndexedHeap<8>>(&trace, &expected),
++        "heap16" => run::<IndexedHeap<16>>(&trace, &expected),
++        "hybrid4" => run::<Hybrid<4>>(&trace, &expected),
++        "hybrid8" => run::<Hybrid<8>>(&trace, &expected),
++        "hybrid16" => run::<Hybrid<16>>(&trace, &expected),
++        "hybrid32" => run::<Hybrid<32>>(&trace, &expected),
++        "hybrid64" => run::<Hybrid<64>>(&trace, &expected),
++        "priority" => run::<Priority>(&trace, &expected),
++        "keyed" => run::<Keyed>(&trace, &expected),
++        "orx-map2" => run::<OrxMap<2>>(&trace, &expected),
++        "orx-map4" => run::<OrxMap<4>>(&trace, &expected),
++        "orx-map8" => run::<OrxMap<8>>(&trace, &expected),
++        "orx-index2" => run::<OrxIndex<2>>(&trace, &expected),
++        "orx-index4" => run::<OrxIndex<4>>(&trace, &expected),
++        "orx-index8" => run::<OrxIndex<8>>(&trace, &expected),
++        _ => panic!("unknown backend"),
+     };
+     println!("{{\"backend\":\"{backend}\",\"case\":\"{case}\",\"seed\":{seed},\"peers\":{},\"width\":{},\"operations\":{},\"elapsed_ns\":{ns},\"checksum\":{checksum},\"outputs\":{outputs},\"exact_oracle\":true}}",trace.peers,trace.width,trace.ops.len());
+ }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/budget.rs:4:
+ /// No sleeping, clock reads, async runtime, floating point or congestion-control
+ /// assumptions. This is an application cap, not a substitute for transport pacing.
+ #[derive(Clone, Debug)]
+-pub struct TokenBucket { capacity: u64, rate: u64, tokens: u64, last: u64 }
++pub struct TokenBucket {
++    capacity: u64,
++    rate: u64,
++    tokens: u64,
++    last: u64,
++}
+ impl TokenBucket {
+-    pub fn new(capacity: u64, bytes_per_tick: u64, now: u64) -> Result<Self,Error> {
+-        if capacity == 0 { return Err(Error::InvalidConfig); }
+-        Ok(Self { capacity,rate:bytes_per_tick,tokens:capacity,last:now })
++    pub fn new(capacity: u64, bytes_per_tick: u64, now: u64) -> Result<Self, Error> {
++        if capacity == 0 {
++            return Err(Error::InvalidConfig);
++        }
++        Ok(Self {
++            capacity,
++            rate: bytes_per_tick,
++            tokens: capacity,
++            last: now,
++        })
+     }
+-    pub fn available(&mut self, now: u64) -> Result<u64,Error> {
+-        if now < self.last { return Err(Error::ClockWentBack); }
+-        let refill = u128::from(now-self.last)*u128::from(self.rate);
+-        self.tokens = (u128::from(self.tokens)+refill).min(u128::from(self.capacity)) as u64;
+-        self.last=now;
++    pub fn available(&mut self, now: u64) -> Result<u64, Error> {
++        if now < self.last {
++            return Err(Error::ClockWentBack);
++        }
++        let refill = u128::from(now - self.last) * u128::from(self.rate);
++        self.tokens = (u128::from(self.tokens) + refill).min(u128::from(self.capacity)) as u64;
++        self.last = now;
+         Ok(self.tokens)
+     }
+     pub fn consume(&mut self, bytes: u64) -> bool {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/budget.rs:21:
+-        if bytes > self.tokens { false } else { self.tokens-=bytes; true }
++        if bytes > self.tokens {
++            false
++        } else {
++            self.tokens -= bytes;
++            true
++        }
+     }
+-    pub fn capacity(&self) -> u64 { self.capacity }
++    pub fn capacity(&self) -> u64 {
++        self.capacity
++    }
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:1:
+-use crate::{Delivery,Error,Limits,Mailbox,Message,Offer,Progress,Receipt,TokenBucket};
+-use crate::queue::{IndexedHeap,ReadyQueue};
++use crate::queue::{IndexedHeap, ReadyQueue};
++use crate::{Delivery, Error, Limits, Mailbox, Message, Offer, Progress, Receipt, TokenBucket};
+ use std::hash::Hash;
+ 
+ /// A handle to one recipient incarnation. Disconnect/reconnect never reuses its
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:6:
+ /// identity, even when a storage slot is recycled or the handle crosses dispatchers.
+-#[derive(Clone,Copy,Debug,Eq,PartialEq,Hash)]
+-pub struct Peer { slot: usize, identity: u64 }
++#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
++pub struct Peer {
++    slot: usize,
++    identity: u64,
++}
+ 
+-#[derive(Clone,Copy,Debug)]
++#[derive(Clone, Copy, Debug)]
+ pub struct PeerConfig {
+     pub limits: Limits,
+     pub burst: u64,
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:17:
+ }
+ impl Default for PeerConfig {
+     fn default() -> Self {
+-        Self { limits:Limits::default(), burst:1<<20, bytes_per_tick:64<<10, quantum:16<<10 }
++        Self {
++            limits: Limits::default(),
++            burst: 1 << 20,
++            bytes_per_tick: 64 << 10,
++            quantum: 16 << 10,
++        }
+     }
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:24:
+-#[derive(Clone,Copy,Debug)]
++#[derive(Clone, Copy, Debug)]
+ pub struct DispatchBudget {
+     pub bytes: u64,
+     pub per_peer_bytes: u64,
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:28:
+     pub deliveries: usize,
+     pub visits: usize,
+ }
+-#[derive(Clone,Copy,Debug,Eq,PartialEq)]
+-pub struct DispatchStats { pub bytes:u64, pub deliveries:usize, pub visits:usize, pub ready_peers:usize }
+-pub struct Envelope<K,T> { pub peer:Peer, pub delivery:Delivery<K,T> }
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++pub struct DispatchStats {
++    pub bytes: u64,
++    pub deliveries: usize,
++    pub visits: usize,
++    pub ready_peers: usize,
++}
++pub struct Envelope<K, T> {
++    pub peer: Peer,
++    pub delivery: Delivery<K, T>,
++}
+ 
+-struct Recipient<K,T,Q:ReadyQueue> {
+-    mailbox:Mailbox<K,T,Q>, bucket:TokenBucket, quantum:u64, deficit:u64,
++struct Recipient<K, T, Q: ReadyQueue> {
++    mailbox: Mailbox<K, T, Q>,
++    bucket: TokenBucket,
++    quantum: u64,
++    deficit: u64,
+ }
+-struct Slot<K,T,Q:ReadyQueue> {
+-    value:Option<Recipient<K,T,Q>>, identity:u64,
++struct Slot<K, T, Q: ReadyQueue> {
++    value: Option<Recipient<K, T, Q>>,
++    identity: u64,
+     // Intrusive active list: disconnect is O(1) and cannot leave stale queue entries.
+-    prev:Option<usize>, next:Option<usize>, active:bool,
++    prev: Option<usize>,
++    next: Option<usize>,
++    active: bool,
+ }
+ 
+ /// Bounded multi-recipient scheduler with an intrusive active list and byte-credit
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:45:
+ /// fairness. Each call visits a recipient at most once; inactive recipients consume
+ /// no polling work. Rate-limited active recipients can still consume one visit.
+-pub struct Dispatcher<K,T,Q:ReadyQueue=IndexedHeap<4>> {
+-    peers:Vec<Slot<K,T,Q>>, free:Vec<usize>, count:usize,
+-    head:Option<usize>, tail:Option<usize>, active:usize,
+-    max_peers:usize, max_bytes:u64, bytes:u64, now:u64,
+-    scratch:Vec<Delivery<K,T>>,
++pub struct Dispatcher<K, T, Q: ReadyQueue = IndexedHeap<4>> {
++    peers: Vec<Slot<K, T, Q>>,
++    free: Vec<usize>,
++    count: usize,
++    head: Option<usize>,
++    tail: Option<usize>,
++    active: usize,
++    max_peers: usize,
++    max_bytes: u64,
++    bytes: u64,
++    now: u64,
++    scratch: Vec<Delivery<K, T>>,
+ }
+-impl<K:Eq+Hash+Clone,T,Q:ReadyQueue> Dispatcher<K,T,Q> {
+-    pub fn new(max_peers:usize,max_buffered_bytes:u64) -> Result<Self,Error> {
+-        if max_peers==0 || max_buffered_bytes==0 { return Err(Error::InvalidConfig); }
+-        Ok(Self { peers:Vec::new(),free:Vec::new(),count:0,head:None,tail:None,active:0,
+-                  max_peers,max_bytes:max_buffered_bytes,bytes:0,now:0,scratch:Vec::new() })
++impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Dispatcher<K, T, Q> {
++    pub fn new(max_peers: usize, max_buffered_bytes: u64) -> Result<Self, Error> {
++        if max_peers == 0 || max_buffered_bytes == 0 {
++            return Err(Error::InvalidConfig);
++        }
++        Ok(Self {
++            peers: Vec::new(),
++            free: Vec::new(),
++            count: 0,
++            head: None,
++            tail: None,
++            active: 0,
++            max_peers,
++            max_bytes: max_buffered_bytes,
++            bytes: 0,
++            now: 0,
++            scratch: Vec::new(),
++        })
+     }
+-    fn index(&self, peer:Peer) -> Result<usize,Error> {
+-        self.peers.get(peer.slot).filter(|s| s.identity==peer.identity && s.value.is_some())
+-            .map(|_|peer.slot).ok_or(Error::UnknownPeer)
++    fn index(&self, peer: Peer) -> Result<usize, Error> {
++        self.peers
++            .get(peer.slot)
++            .filter(|s| s.identity == peer.identity && s.value.is_some())
++            .map(|_| peer.slot)
++            .ok_or(Error::UnknownPeer)
+     }
+-    fn unlink(&mut self,i:usize) {
+-        if !self.peers[i].active { return; }
+-        let prev=self.peers[i].prev; let next=self.peers[i].next;
+-        if let Some(p)=prev { self.peers[p].next=next; } else { self.head=next; }
+-        if let Some(n)=next { self.peers[n].prev=prev; } else { self.tail=prev; }
+-        self.peers[i].active=false; self.peers[i].prev=None; self.peers[i].next=None;
+-        self.active-=1;
++    fn unlink(&mut self, i: usize) {
++        if !self.peers[i].active {
++            return;
++        }
++        let prev = self.peers[i].prev;
++        let next = self.peers[i].next;
++        if let Some(p) = prev {
++            self.peers[p].next = next;
++        } else {
++            self.head = next;
++        }
++        if let Some(n) = next {
++            self.peers[n].prev = prev;
++        } else {
++            self.tail = prev;
++        }
++        self.peers[i].active = false;
++        self.peers[i].prev = None;
++        self.peers[i].next = None;
++        self.active -= 1;
+     }
+-    fn refresh(&mut self,i:usize) {
++    fn refresh(&mut self, i: usize) {
+         if self.peers[i].value.as_ref().unwrap().mailbox.has_ready() {
+             if !self.peers[i].active {
+-                let prev=self.tail;
+-                self.peers[i].prev=prev; self.peers[i].next=None; self.peers[i].active=true;
+-                if let Some(p)=prev { self.peers[p].next=Some(i); } else { self.head=Some(i); }
+-                self.tail=Some(i); self.active+=1;
++                let prev = self.tail;
++                self.peers[i].prev = prev;
++                self.peers[i].next = None;
++                self.peers[i].active = true;
++                if let Some(p) = prev {
++                    self.peers[p].next = Some(i);
++                } else {
++                    self.head = Some(i);
++                }
++                self.tail = Some(i);
++                self.active += 1;
+             }
+         } else {
+             self.unlink(i);
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:81:
+-            self.peers[i].value.as_mut().unwrap().deficit=0;
++            self.peers[i].value.as_mut().unwrap().deficit = 0;
+         }
+     }
+-    pub fn add_peer(&mut self, config:PeerConfig) -> Result<Peer,Error> {
+-        if self.count>=self.max_peers { return Err(Error::Capacity); }
+-        if config.quantum==0 || config.burst<u64::from(config.limits.max_message_bytes) { return Err(Error::InvalidConfig); }
+-        let mailbox=Mailbox::new(config.limits)?;
+-        let identity=mailbox.identity();
+-        let recipient=Recipient { mailbox,bucket:TokenBucket::new(config.burst,config.bytes_per_tick,self.now)?,quantum:config.quantum,deficit:0 };
+-        let i=self.free.pop().unwrap_or(self.peers.len());
+-        let slot=Slot { value:Some(recipient),identity,prev:None,next:None,active:false };
+-        if i==self.peers.len() { self.peers.push(slot); } else { self.peers[i]=slot; }
+-        self.count+=1;
+-        Ok(Peer {slot:i,identity})
++    pub fn add_peer(&mut self, config: PeerConfig) -> Result<Peer, Error> {
++        if self.count >= self.max_peers {
++            return Err(Error::Capacity);
++        }
++        if config.quantum == 0 || config.burst < u64::from(config.limits.max_message_bytes) {
++            return Err(Error::InvalidConfig);
++        }
++        let mailbox = Mailbox::new(config.limits)?;
++        let identity = mailbox.identity();
++        let recipient = Recipient {
++            mailbox,
++            bucket: TokenBucket::new(config.burst, config.bytes_per_tick, self.now)?,
++            quantum: config.quantum,
++            deficit: 0,
++        };
++        let i = self.free.pop().unwrap_or(self.peers.len());
++        let slot = Slot {
++            value: Some(recipient),
++            identity,
++            prev: None,
++            next: None,
++            active: false,
++        };
++        if i == self.peers.len() {
++            self.peers.push(slot);
++        } else {
++            self.peers[i] = slot;
++        }
++        self.count += 1;
++        Ok(Peer { slot: i, identity })
+     }
+-    pub fn remove_peer(&mut self, peer:Peer) -> bool {
+-        let Ok(i)=self.index(peer) else { return false; };
++    pub fn remove_peer(&mut self, peer: Peer) -> bool {
++        let Ok(i) = self.index(peer) else {
++            return false;
++        };
+         self.unlink(i);
+-        self.bytes-=self.peers[i].value.take().unwrap().mailbox.buffered_bytes();
+-        self.count-=1; self.free.push(i); true
++        self.bytes -= self.peers[i].value.take().unwrap().mailbox.buffered_bytes();
++        self.count -= 1;
++        self.free.push(i);
++        true
+     }
+-    pub fn offer_state(&mut self,peer:Peer,key:K,revision:u64,message:Message<T>,priority_delay:u16,now:u64) -> Result<Offer,Error> {
+-        if now<self.now { return Err(Error::ClockWentBack); }
+-        let i=self.index(peer)?;
+-        let m=&mut self.peers[i].value.as_mut().unwrap().mailbox;
+-        let stale=m.progress(&key).is_some_and(|p|revision<=p.latest);
++    pub fn offer_state(
++        &mut self,
++        peer: Peer,
++        key: K,
++        revision: u64,
++        message: Message<T>,
++        priority_delay: u16,
++        now: u64,
++    ) -> Result<Offer, Error> {
++        if now < self.now {
++            return Err(Error::ClockWentBack);
++        }
++        let i = self.index(peer)?;
++        let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
++        let stale = m.progress(&key).is_some_and(|p| revision <= p.latest);
+         if !stale {
+-            let projected=(self.bytes-m.pending_bytes(&key)).checked_add(u64::from(message.bytes())).ok_or(Error::Capacity)?;
+-            if projected>self.max_bytes { return Err(Error::Capacity); }
++            let projected = (self.bytes - m.pending_bytes(&key))
++                .checked_add(u64::from(message.bytes()))
++                .ok_or(Error::Capacity)?;
++            if projected > self.max_bytes {
++                return Err(Error::Capacity);
++            }
+         }
+-        let before=m.buffered_bytes();
+-        let outcome=m.offer_state(key,revision,message,priority_delay,now)?;
+-        self.bytes=self.bytes-before+m.buffered_bytes(); self.now=now;
+-        self.refresh(i); Ok(outcome)
++        let before = m.buffered_bytes();
++        let outcome = m.offer_state(key, revision, message, priority_delay, now)?;
++        self.bytes = self.bytes - before + m.buffered_bytes();
++        self.now = now;
++        self.refresh(i);
++        Ok(outcome)
+     }
+-    pub fn offer_event(&mut self,peer:Peer,message:Message<T>,priority_delay:u16,now:u64) -> Result<u64,Error> {
+-        if now<self.now { return Err(Error::ClockWentBack); }
+-        let i=self.index(peer)?;
+-        let projected=self.bytes.checked_add(u64::from(message.bytes())).ok_or(Error::Capacity)?;
+-        if projected>self.max_bytes { return Err(Error::Capacity); }
+-        let event=self.peers[i].value.as_mut().unwrap().mailbox.offer_event(message,priority_delay,now)?;
+-        self.bytes=projected; self.now=now; self.refresh(i); Ok(event)
++    pub fn offer_event(
++        &mut self,
++        peer: Peer,
++        message: Message<T>,
++        priority_delay: u16,
++        now: u64,
++    ) -> Result<u64, Error> {
++        if now < self.now {
++            return Err(Error::ClockWentBack);
++        }
++        let i = self.index(peer)?;
++        let projected = self
++            .bytes
++            .checked_add(u64::from(message.bytes()))
++            .ok_or(Error::Capacity)?;
++        if projected > self.max_bytes {
++            return Err(Error::Capacity);
++        }
++        let event = self.peers[i].value.as_mut().unwrap().mailbox.offer_event(
++            message,
++            priority_delay,
++            now,
++        )?;
++        self.bytes = projected;
++        self.now = now;
++        self.refresh(i);
++        Ok(event)
+     }
+-    pub fn ack(&mut self,peer:Peer,receipt:Receipt) -> bool {
+-        let Ok(i)=self.index(peer) else { return false; };
+-        let m=&mut self.peers[i].value.as_mut().unwrap().mailbox;
+-        let before=m.buffered_bytes(); let result=m.ack(receipt);
+-        self.bytes-=before-m.buffered_bytes(); self.refresh(i); result
++    pub fn ack(&mut self, peer: Peer, receipt: Receipt) -> bool {
++        let Ok(i) = self.index(peer) else {
++            return false;
++        };
++        let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
++        let before = m.buffered_bytes();
++        let result = m.ack(receipt);
++        self.bytes -= before - m.buffered_bytes();
++        self.refresh(i);
++        result
+     }
+-    pub fn retry(&mut self,peer:Peer,receipt:Receipt) -> bool {
+-        let Ok(i)=self.index(peer) else { return false; };
+-        let m=&mut self.peers[i].value.as_mut().unwrap().mailbox;
+-        let before=m.buffered_bytes(); let result=m.retry(receipt);
+-        self.bytes-=before-m.buffered_bytes(); self.refresh(i); result
++    pub fn retry(&mut self, peer: Peer, receipt: Receipt) -> bool {
++        let Ok(i) = self.index(peer) else {
++            return false;
++        };
++        let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
++        let before = m.buffered_bytes();
++        let result = m.retry(receipt);
++        self.bytes -= before - m.buffered_bytes();
++        self.refresh(i);
++        result
+     }
+-    pub fn forget_state(&mut self,peer:Peer,key:&K) -> bool {
+-        let Ok(i)=self.index(peer) else { return false; };
+-        let m=&mut self.peers[i].value.as_mut().unwrap().mailbox;
+-        let before=m.buffered_bytes(); let result=m.forget_state(key);
+-        self.bytes-=before-m.buffered_bytes(); self.refresh(i); result
++    pub fn forget_state(&mut self, peer: Peer, key: &K) -> bool {
++        let Ok(i) = self.index(peer) else {
++            return false;
++        };
++        let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
++        let before = m.buffered_bytes();
++        let result = m.forget_state(key);
++        self.bytes -= before - m.buffered_bytes();
++        self.refresh(i);
++        result
+     }
+     /// Global and per-peer caps apply to this call; token buckets apply across
+     /// calls. Fair-service credit carries forward only while the peer is ready.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/dispatcher.rs:144:
+     /// A packet must fit all caps; callers must allow a large enough budget on a
+     /// later poll to deliver a larger message. No automatic fragmentation occurs.
+-    pub fn dispatch_into(&mut self,now:u64,budget:DispatchBudget,out:&mut Vec<Envelope<K,T>>) -> Result<DispatchStats,Error> {
+-        if now<self.now { return Err(Error::ClockWentBack); }
+-        self.now=now;
+-        let mut remaining=budget.bytes; let mut delivered=0; let mut visited=0;
+-        let visit_limit=budget.visits.min(self.active);
+-        while remaining>0 && delivered<budget.deliveries && visited<visit_limit {
+-            let i=self.head.unwrap(); self.unlink(i); visited+=1;
+-            let peer=Peer { slot:i,identity:self.peers[i].identity };
+-            let r=self.peers[i].value.as_mut().unwrap();
+-            r.deficit=r.deficit.saturating_add(r.quantum).min(r.mailbox.byte_limit());
+-            let allowance=remaining.min(budget.per_peer_bytes).min(r.deficit).min(r.bucket.available(now)?);
++    pub fn dispatch_into(
++        &mut self,
++        now: u64,
++        budget: DispatchBudget,
++        out: &mut Vec<Envelope<K, T>>,
++    ) -> Result<DispatchStats, Error> {
++        if now < self.now {
++            return Err(Error::ClockWentBack);
++        }
++        self.now = now;
++        let mut remaining = budget.bytes;
++        let mut delivered = 0;
++        let mut visited = 0;
++        let visit_limit = budget.visits.min(self.active);
++        while remaining > 0 && delivered < budget.deliveries && visited < visit_limit {
++            let i = self.head.unwrap();
++            self.unlink(i);
++            visited += 1;
++            let peer = Peer {
++                slot: i,
++                identity: self.peers[i].identity,
++            };
++            let r = self.peers[i].value.as_mut().unwrap();
++            r.deficit = r
++                .deficit
++                .saturating_add(r.quantum)
++                .min(r.mailbox.byte_limit());
++            let allowance = remaining
++                .min(budget.per_peer_bytes)
++                .min(r.deficit)
++                .min(r.bucket.available(now)?);
+             self.scratch.clear();
+-            let used=match r.mailbox.drain_into(now,allowance,budget.deliveries-delivered,&mut self.scratch) {
+-                Ok(used)=>used,
+-                Err(error)=>{ self.refresh(i); return Err(error); }
++            let used = match r.mailbox.drain_into(
++                now,
++                allowance,
++                budget.deliveries - delivered,
++                &mut self.scratch,
++            ) {
++                Ok(used) => used,
++                Err(error) => {
++                    self.refresh(i);
++                    return Err(error);
++                }
+             };
+-            assert!(r.bucket.consume(used)); r.deficit-=used; remaining-=used;
+-            delivered+=self.scratch.len();
+-            out.extend(self.scratch.drain(..).map(|delivery|Envelope {peer,delivery}));
++            assert!(r.bucket.consume(used));
++            r.deficit -= used;
++            remaining -= used;
++            delivered += self.scratch.len();
++            out.extend(
++                self.scratch
++                    .drain(..)
++                    .map(|delivery| Envelope { peer, delivery }),
++            );
+             self.refresh(i);
+         }
+-        Ok(DispatchStats {bytes:budget.bytes-remaining,deliveries:delivered,visits:visited,ready_peers:self.active})
++        Ok(DispatchStats {
++            bytes: budget.bytes - remaining,
++            deliveries: delivered,
++            visits: visited,
++            ready_peers: self.active,
++        })
+     }
+-    pub fn progress(&self,peer:Peer,key:&K) -> Option<Progress> {
+-        self.peers.get(self.index(peer).ok()?)?.value.as_ref()?.mailbox.progress(key)
++    pub fn progress(&self, peer: Peer, key: &K) -> Option<Progress> {
++        self.peers
++            .get(self.index(peer).ok()?)?
++            .value
++            .as_ref()?
++            .mailbox
++            .progress(key)
+     }
+-    pub fn buffered_bytes(&self) -> u64 { self.bytes }
+-    pub fn peer_count(&self) -> usize { self.count }
+-    pub fn ready_peers(&self) -> usize { self.active }
++    pub fn buffered_bytes(&self) -> u64 {
++        self.bytes
++    }
++    pub fn peer_count(&self) -> usize {
++        self.count
++    }
++    pub fn ready_peers(&self) -> usize {
++        self.active
++    }
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/lib.rs:1:
+ //! Bounded, coalescing delivery scheduling independent of transports and schemas.
+ #![forbid(unsafe_code)]
+-pub mod queue;
+ mod mailbox;
++pub mod queue;
+ pub use mailbox::{Delivery, Error, Kind, Limits, Mailbox, Message, Offer, Progress, Receipt};
+ mod budget;
+ mod dispatcher;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/lib.rs:8:
+ pub use budget::TokenBucket;
+-pub use dispatcher::{DispatchBudget,DispatchStats,Dispatcher,Envelope,Peer,PeerConfig};
++pub use dispatcher::{DispatchBudget, DispatchStats, Dispatcher, Envelope, Peer, PeerConfig};
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:2:
+ use crate::queue::{Entry, IndexedHeap, Rank, ReadyQueue};
+ use std::collections::{HashMap, VecDeque};
+ use std::hash::Hash;
+-use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
++use std::sync::{
++    atomic::{AtomicU64, Ordering},
++    Arc,
++};
+ 
+ static NEXT_MAILBOX: AtomicU64 = AtomicU64::new(1);
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:9:
+ #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+-pub enum Error { InvalidConfig, Capacity, MessageTooLarge, ClockWentBack, Exhausted, UnknownPeer }
++pub enum Error {
++    InvalidConfig,
++    Capacity,
++    MessageTooLarge,
++    ClockWentBack,
++    Exhausted,
++    UnknownPeer,
++}
+ 
+ /// Logical wire-byte bounds, including both pending and unacknowledged messages.
+ /// Payload allocation size is application-owned; bytes must include framing overhead.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:19:
+     pub max_message_bytes: u32,
+ }
+ impl Default for Limits {
+-    fn default() -> Self { Self { states: 1024, events: 256, bytes: 1 << 20, max_message_bytes: 64 << 10 } }
++    fn default() -> Self {
++        Self {
++            states: 1024,
++            events: 256,
++            bytes: 1 << 20,
++            max_message_bytes: 64 << 10,
++        }
++    }
+ }
+ 
+ /// Immutable shared payload plus its conservatively estimated wire cost.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:26:
+ /// Sharing is opt-in: construct once and clone across recipients.
+-pub struct Message<T> { pub payload: Arc<T>, bytes: u32 }
++pub struct Message<T> {
++    pub payload: Arc<T>,
++    bytes: u32,
++}
+ impl<T> Clone for Message<T> {
+-    fn clone(&self) -> Self { Self { payload: self.payload.clone(), bytes: self.bytes } }
++    fn clone(&self) -> Self {
++        Self {
++            payload: self.payload.clone(),
++            bytes: self.bytes,
++        }
++    }
+ }
+ impl<T> Message<T> {
+     pub fn new(payload: Arc<T>, bytes: u32) -> Result<Self, Error> {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:33:
+-        if bytes == 0 { return Err(Error::InvalidConfig); }
++        if bytes == 0 {
++            return Err(Error::InvalidConfig);
++        }
+         Ok(Self { payload, bytes })
+     }
+-    pub fn bytes(&self) -> u32 { self.bytes }
++    pub fn bytes(&self) -> u32 {
++        self.bytes
++    }
+ }
+ 
+ /// Opaque exact attempt identity. Tokens from another mailbox, a canceled record,
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:40:
+ /// or an earlier retry cannot acknowledge a new attempt.
+ #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+-pub struct Receipt { mailbox: u64, serial: u64, slot: usize, event: bool }
++pub struct Receipt {
++    mailbox: u64,
++    serial: u64,
++    slot: usize,
++    event: bool,
++}
+ 
+ #[derive(Clone, Debug, Eq, PartialEq)]
+-pub enum Kind<K> { State { key: K, revision: u64 }, Event { sequence: u64 } }
++pub enum Kind<K> {
++    State { key: K, revision: u64 },
++    Event { sequence: u64 },
++}
+ 
+ pub struct Delivery<K, T> {
+     pub receipt: Receipt,
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:52:
+ }
+ 
+ #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+-pub enum Offer { Inserted, Replaced, Stale }
++pub enum Offer {
++    Inserted,
++    Replaced,
++    Stale,
++}
+ 
+ #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+ pub struct Progress {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:62:
+     pub in_flight: Option<u64>,
+ }
+ 
+-struct Value<T> { revision: u64, rank: Rank, queued_at: u64, message: Message<T> }
+-struct Flight<T> { receipt: Receipt, value: Value<T> }
+-struct State<K,T> {
+-    key: K, latest: u64, acknowledged: Option<u64>, pending: Option<Value<T>>, flight: Option<Flight<T>>,
++struct Value<T> {
++    revision: u64,
++    rank: Rank,
++    queued_at: u64,
++    message: Message<T>,
+ }
+-struct Event<T> { value: Value<T>, flight: Option<Receipt> }
++struct Flight<T> {
++    receipt: Receipt,
++    value: Value<T>,
++}
++struct State<K, T> {
++    key: K,
++    latest: u64,
++    acknowledged: Option<u64>,
++    pending: Option<Value<T>>,
++    flight: Option<Flight<T>>,
++}
++struct Event<T> {
++    value: Value<T>,
++    flight: Option<Receipt>,
++}
+ 
+ /// Generic keys and payloads; the ready-queue structure is independently selectable.
+ /// All methods are synchronous. Shard mailboxes across threads rather than locking
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:74:
+ /// a global queue in the core. A state key is a stream of *replacement snapshots*,
+ /// not a chain of patches that depend on skipped revisions.
+-pub struct Mailbox<K,T,Q: ReadyQueue = IndexedHeap<4>> {
++pub struct Mailbox<K, T, Q: ReadyQueue = IndexedHeap<4>> {
+     id: u64,
+     limits: Limits,
+-    keys: HashMap<K,usize>,
+-    slots: Vec<Option<State<K,T>>>,
++    keys: HashMap<K, usize>,
++    slots: Vec<Option<State<K, T>>>,
+     free: Vec<usize>,
+     events: VecDeque<Event<T>>,
+     ready: Q,
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:87:
+     now: u64,
+ }
+ 
+-impl<K: Eq + Hash + Clone,T,Q: ReadyQueue> Mailbox<K,T,Q> {
++impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
+     pub fn new(limits: Limits) -> Result<Self, Error> {
+-        if limits.bytes == 0 || limits.max_message_bytes == 0 || u64::from(limits.max_message_bytes) > limits.bytes {
++        if limits.bytes == 0
++            || limits.max_message_bytes == 0
++            || u64::from(limits.max_message_bytes) > limits.bytes
++        {
+             return Err(Error::InvalidConfig);
+         }
+-        let id = NEXT_MAILBOX.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
++        let id = NEXT_MAILBOX
++            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
+             .map_err(|_| Error::Exhausted)?;
+-        Ok(Self { id, limits, keys: HashMap::new(), slots: Vec::new(), free: Vec::new(),
+-                  events: VecDeque::new(), ready: Q::with_bound(limits.states), deferred: Vec::new(), bytes: 0, serial: 0, now: 0 })
++        Ok(Self {
++            id,
++            limits,
++            keys: HashMap::new(),
++            slots: Vec::new(),
++            free: Vec::new(),
++            events: VecDeque::new(),
++            ready: Q::with_bound(limits.states),
++            deferred: Vec::new(),
++            bytes: 0,
++            serial: 0,
++            now: 0,
++        })
+     }
+     fn check(&self, now: u64, message: &Message<T>) -> Result<(), Error> {
+-        if now < self.now { return Err(Error::ClockWentBack); }
+-        if message.bytes > self.limits.max_message_bytes { return Err(Error::MessageTooLarge); }
++        if now < self.now {
++            return Err(Error::ClockWentBack);
++        }
++        if message.bytes > self.limits.max_message_bytes {
++            return Err(Error::MessageTooLarge);
++        }
+         Ok(())
+     }
+-    fn next(&self) -> Result<u64, Error> { self.serial.checked_add(1).ok_or(Error::Exhausted) }
++    fn next(&self) -> Result<u64, Error> {
++        self.serial.checked_add(1).ok_or(Error::Exhausted)
++    }
+     fn rank(&self, now: u64, priority_delay: u16, order: u64) -> Result<Rank, Error> {
+-        Ok(Rank { due: now.checked_add(u64::from(priority_delay)).ok_or(Error::Exhausted)?, order })
++        Ok(Rank {
++            due: now
++                .checked_add(u64::from(priority_delay))
++                .ok_or(Error::Exhausted)?,
++            order,
++        })
+     }
+ 
+     /// Retain only the latest unsent version; an older in-flight version remains
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:111:
+     /// until exact ACK or retry. Replacements preserve age and can promote urgency.
+     /// Admission failure leaves existing queued messages and revision watermarks intact.
+-    pub fn offer_state(&mut self, key: K, revision: u64, message: Message<T>, priority_delay: u16, now: u64) -> Result<Offer, Error> {
++    pub fn offer_state(
++        &mut self,
++        key: K,
++        revision: u64,
++        message: Message<T>,
++        priority_delay: u16,
++        now: u64,
++    ) -> Result<Offer, Error> {
+         self.check(now, &message)?;
+         let index = self.keys.get(&key).copied();
+         if let Some(i) = index {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:117:
+-            if revision <= self.slots[i].as_ref().unwrap().latest { return Ok(Offer::Stale); }
+-        } else if self.keys.len() >= self.limits.states { return Err(Error::Capacity); }
+-        let old_bytes = index.and_then(|i| self.slots[i].as_ref()?.pending.as_ref()).map_or(0, |p| u64::from(p.message.bytes));
+-        let total = (self.bytes - old_bytes).checked_add(u64::from(message.bytes)).ok_or(Error::Capacity)?;
+-        if total > self.limits.bytes { return Err(Error::Capacity); }
++            if revision <= self.slots[i].as_ref().unwrap().latest {
++                return Ok(Offer::Stale);
++            }
++        } else if self.keys.len() >= self.limits.states {
++            return Err(Error::Capacity);
++        }
++        let old_bytes = index
++            .and_then(|i| self.slots[i].as_ref()?.pending.as_ref())
++            .map_or(0, |p| u64::from(p.message.bytes));
++        let total = (self.bytes - old_bytes)
++            .checked_add(u64::from(message.bytes))
++            .ok_or(Error::Capacity)?;
++        if total > self.limits.bytes {
++            return Err(Error::Capacity);
++        }
+         let serial = self.next()?;
+         let rank = self.rank(now, priority_delay, serial)?;
+-        let mut value = Value { revision, rank, queued_at: now, message };
++        let mut value = Value {
++            revision,
++            rank,
++            queued_at: now,
++            message,
++        };
+         let outcome;
+         let i = if let Some(i) = index {
+             let state = self.slots[i].as_mut().unwrap();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:129:
+                 value.rank = old.rank.min(rank);
+                 value.queued_at = old.queued_at;
+                 outcome = Offer::Replaced;
+-            } else { outcome = Offer::Inserted; }
++            } else {
++                outcome = Offer::Inserted;
++            }
+             state.pending = Some(value);
+             state.latest = revision;
+             i
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:136:
+         } else {
+             let i = self.free.pop().unwrap_or(self.slots.len());
+-            let state = State { key: key.clone(), latest: revision, acknowledged: None, pending: Some(value), flight: None };
+-            if i == self.slots.len() { self.slots.push(Some(state)); } else { self.slots[i] = Some(state); }
++            let state = State {
++                key: key.clone(),
++                latest: revision,
++                acknowledged: None,
++                pending: Some(value),
++                flight: None,
++            };
++            if i == self.slots.len() {
++                self.slots.push(Some(state));
++            } else {
++                self.slots[i] = Some(state);
++            }
+             self.keys.insert(key, i);
+             outcome = Offer::Inserted;
+             i
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:143:
+         };
+         let state = self.slots[i].as_ref().unwrap();
+-        if state.flight.is_none() { self.ready.upsert(Entry { id: i, rank: state.pending.as_ref().unwrap().rank }); }
+-        self.bytes = total; self.serial = serial; self.now = now;
++        if state.flight.is_none() {
++            self.ready.upsert(Entry {
++                id: i,
++                rank: state.pending.as_ref().unwrap().rank,
++            });
++        }
++        self.bytes = total;
++        self.serial = serial;
++        self.now = now;
+         Ok(outcome)
+     }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:150:
+     /// FIFO events are never coalesced or silently dropped. There is one event
+     /// attempt in flight at a time; ACK it before handing off its successor.
+-    pub fn offer_event(&mut self, message: Message<T>, priority_delay: u16, now: u64) -> Result<u64, Error> {
++    pub fn offer_event(
++        &mut self,
++        message: Message<T>,
++        priority_delay: u16,
++        now: u64,
++    ) -> Result<u64, Error> {
+         self.check(now, &message)?;
+-        if self.events.len() >= self.limits.events { return Err(Error::Capacity); }
+-        let total = self.bytes.checked_add(u64::from(message.bytes)).ok_or(Error::Capacity)?;
+-        if total > self.limits.bytes { return Err(Error::Capacity); }
++        if self.events.len() >= self.limits.events {
++            return Err(Error::Capacity);
++        }
++        let total = self
++            .bytes
++            .checked_add(u64::from(message.bytes))
++            .ok_or(Error::Capacity)?;
++        if total > self.limits.bytes {
++            return Err(Error::Capacity);
++        }
+         let serial = self.next()?;
+         let rank = self.rank(now, priority_delay, serial)?;
+-        self.events.push_back(Event { value: Value { revision: serial, rank, queued_at: now, message }, flight: None });
+-        self.bytes = total; self.serial = serial; self.now = now;
++        self.events.push_back(Event {
++            value: Value {
++                revision: serial,
++                rank,
++                queued_at: now,
++                message,
++            },
++            flight: None,
++        });
++        self.bytes = total;
++        self.serial = serial;
++        self.now = now;
+         Ok(serial)
+     }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:165:
+     /// pending while smaller state updates may proceed. No delivery is implicitly
+     /// acknowledged: call `ack` after confirmed delivery, or `retry` after failure.
+     /// All candidates are eligible immediately; rank expresses urgency and age.
+-    pub fn drain_into(&mut self, now: u64, budget: u64, max_items: usize, out: &mut Vec<Delivery<K,T>>) -> Result<u64, Error> {
+-        if now < self.now { return Err(Error::ClockWentBack); }
++    pub fn drain_into(
++        &mut self,
++        now: u64,
++        budget: u64,
++        max_items: usize,
++        out: &mut Vec<Delivery<K, T>>,
++    ) -> Result<u64, Error> {
++        if now < self.now {
++            return Err(Error::ClockWentBack);
++        }
+         // Reserve enough serial space up front, including attempts later skipped.
+-        let attempts=max_items.min(self.ready.len().saturating_add(1));
+-        self.serial.checked_add(u64::try_from(attempts).map_err(|_| Error::Exhausted)?).ok_or(Error::Exhausted)?;
++        let attempts = max_items.min(self.ready.len().saturating_add(1));
++        self.serial
++            .checked_add(u64::try_from(attempts).map_err(|_| Error::Exhausted)?)
++            .ok_or(Error::Exhausted)?;
+         self.now = now;
+         let mut remaining = budget;
+         let mut sent = 0;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:177:
+         self.deferred.clear();
+         while sent < max_items && remaining > 0 {
+             let state = self.ready.peek();
+-            let event_rank = if event_blocked { None } else {
+-                self.events.front().filter(|e| e.flight.is_none()).map(|e| e.value.rank)
++            let event_rank = if event_blocked {
++                None
++            } else {
++                self.events
++                    .front()
++                    .filter(|e| e.flight.is_none())
++                    .map(|e| e.value.rank)
+             };
+             let choose_event = event_rank.is_some_and(|r| state.is_none_or(|s| r < s.rank));
+             if choose_event {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:185:
+                 let event = self.events.front_mut().unwrap();
+-                if u64::from(event.value.message.bytes) > remaining { event_blocked = true; continue; }
++                if u64::from(event.value.message.bytes) > remaining {
++                    event_blocked = true;
++                    continue;
++                }
+                 self.serial += 1;
+-                let receipt = Receipt { mailbox: self.id, serial: self.serial, slot: 0, event: true };
++                let receipt = Receipt {
++                    mailbox: self.id,
++                    serial: self.serial,
++                    slot: 0,
++                    event: true,
++                };
+                 event.flight = Some(receipt);
+                 remaining -= u64::from(event.value.message.bytes);
+-                out.push(Delivery { receipt, kind: Kind::Event { sequence: event.value.revision },
+-                                    message: event.value.message.clone(), queued_at: event.value.queued_at });
++                out.push(Delivery {
++                    receipt,
++                    kind: Kind::Event {
++                        sequence: event.value.revision,
++                    },
++                    message: event.value.message.clone(),
++                    queued_at: event.value.queued_at,
++                });
+             } else if let Some(entry) = state {
+                 self.ready.pop();
+                 let slot = self.slots[entry.id].as_mut().unwrap();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:196:
+                 if u64::from(slot.pending.as_ref().unwrap().message.bytes) > remaining {
+-                    self.deferred.push(entry); continue;
++                    self.deferred.push(entry);
++                    continue;
+                 }
+                 let value = slot.pending.take().unwrap();
+                 self.serial += 1;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:201:
+-                let receipt = Receipt { mailbox: self.id, serial: self.serial, slot: entry.id, event: false };
++                let receipt = Receipt {
++                    mailbox: self.id,
++                    serial: self.serial,
++                    slot: entry.id,
++                    event: false,
++                };
+                 remaining -= u64::from(value.message.bytes);
+-                out.push(Delivery { receipt, kind: Kind::State { key: slot.key.clone(), revision: value.revision },
+-                                    message: value.message.clone(), queued_at: value.queued_at });
++                out.push(Delivery {
++                    receipt,
++                    kind: Kind::State {
++                        key: slot.key.clone(),
++                        revision: value.revision,
++                    },
++                    message: value.message.clone(),
++                    queued_at: value.queued_at,
++                });
+                 slot.flight = Some(Flight { receipt, value });
+-            } else { break; }
++            } else {
++                break;
++            }
+             sent += 1;
+         }
+-        for entry in self.deferred.drain(..) { self.ready.upsert(entry); }
++        for entry in self.deferred.drain(..) {
++            self.ready.upsert(entry);
++        }
+         Ok(budget - remaining)
+     }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:213:
+     /// Exact ACK. Stale, canceled, duplicated or foreign receipts return false.
+     pub fn ack(&mut self, receipt: Receipt) -> bool {
+-        if receipt.mailbox != self.id { return false; }
++        if receipt.mailbox != self.id {
++            return false;
++        }
+         if receipt.event {
+-            if self.events.front().is_some_and(|e| e.flight == Some(receipt)) {
++            if self
++                .events
++                .front()
++                .is_some_and(|e| e.flight == Some(receipt))
++            {
+                 self.bytes -= u64::from(self.events.pop_front().unwrap().value.message.bytes);
+                 return true;
+             }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:223:
+                 let f = state.flight.take().unwrap();
+                 self.bytes -= u64::from(f.value.message.bytes);
+                 state.acknowledged = Some(f.value.revision);
+-                if let Some(value) = &state.pending { self.ready.upsert(Entry { id: receipt.slot, rank: value.rank }); }
++                if let Some(value) = &state.pending {
++                    self.ready.upsert(Entry {
++                        id: receipt.slot,
++                        rank: value.rank,
++                    });
++                }
+                 return true;
+             }
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:234:
+     /// its older failed attempt; events retain exact payload and FIFO position.
+     /// The old receipt is immediately invalidated, so late ACKs cannot clear retries.
+     pub fn retry(&mut self, receipt: Receipt) -> bool {
+-        if receipt.mailbox != self.id { return false; }
++        if receipt.mailbox != self.id {
++            return false;
++        }
+         if receipt.event {
+             if let Some(e) = self.events.front_mut() {
+-                if e.flight == Some(receipt) { e.flight = None; return true; }
++                if e.flight == Some(receipt) {
++                    e.flight = None;
++                    return true;
++                }
+             }
+         } else if let Some(Some(state)) = self.slots.get_mut(receipt.slot) {
+             if state.flight.as_ref().is_some_and(|f| f.receipt == receipt) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:246:
+                     self.bytes -= u64::from(flight.value.message.bytes);
+                     pending.rank = pending.rank.min(flight.value.rank);
+                     pending.queued_at = pending.queued_at.min(flight.value.queued_at);
+-                } else { state.pending = Some(flight.value); }
+-                self.ready.upsert(Entry { id: receipt.slot, rank: state.pending.as_ref().unwrap().rank });
++                } else {
++                    state.pending = Some(flight.value);
++                }
++                self.ready.upsert(Entry {
++                    id: receipt.slot,
++                    rank: state.pending.as_ref().unwrap().rank,
++                });
+                 return true;
+             }
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:258:
+     /// Retractions/deletions must themselves be encoded as replacement state if
+     /// the remote recipient needs to observe them before forgetting the stream.
+     pub fn forget_state(&mut self, key: &K) -> bool {
+-        let Some(i) = self.keys.remove(key) else { return false; };
++        let Some(i) = self.keys.remove(key) else {
++            return false;
++        };
+         let state = self.slots[i].take().unwrap();
+-        if let Some(p) = state.pending { self.bytes -= u64::from(p.message.bytes); }
+-        if let Some(f) = state.flight { self.bytes -= u64::from(f.value.message.bytes); }
+-        self.ready.remove(i); self.free.push(i); true
++        if let Some(p) = state.pending {
++            self.bytes -= u64::from(p.message.bytes);
++        }
++        if let Some(f) = state.flight {
++            self.bytes -= u64::from(f.value.message.bytes);
++        }
++        self.ready.remove(i);
++        self.free.push(i);
++        true
+     }
+     pub fn progress(&self, key: &K) -> Option<Progress> {
+         let s = self.slots[*self.keys.get(key)?].as_ref()?;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:269:
+-        Some(Progress { latest: s.latest, acknowledged: s.acknowledged,
+-                        pending: s.pending.as_ref().map(|p| p.revision), in_flight: s.flight.as_ref().map(|f| f.value.revision) })
++        Some(Progress {
++            latest: s.latest,
++            acknowledged: s.acknowledged,
++            pending: s.pending.as_ref().map(|p| p.revision),
++            in_flight: s.flight.as_ref().map(|f| f.value.revision),
++        })
+     }
+-    pub fn buffered_bytes(&self) -> u64 { self.bytes }
+-    pub fn state_count(&self) -> usize { self.keys.len() }
+-    pub fn event_count(&self) -> usize { self.events.len() }
++    pub fn buffered_bytes(&self) -> u64 {
++        self.bytes
++    }
++    pub fn state_count(&self) -> usize {
++        self.keys.len()
++    }
++    pub fn event_count(&self) -> usize {
++        self.events.len()
++    }
+     pub fn has_ready(&self) -> bool {
+         !self.ready.is_empty() || self.events.front().is_some_and(|e| e.flight.is_none())
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/mailbox.rs:278:
+-    pub(crate) fn identity(&self) -> u64 { self.id }
+-    pub(crate) fn byte_limit(&self) -> u64 { self.limits.bytes }
+-    pub(crate) fn pending_bytes(&self,key:&K) -> u64 {
+-        self.keys.get(key).and_then(|&i| self.slots[i].as_ref()?.pending.as_ref()).map_or(0,|p|u64::from(p.message.bytes))
++    pub(crate) fn identity(&self) -> u64 {
++        self.id
++    }
++    pub(crate) fn byte_limit(&self) -> u64 {
++        self.limits.bytes
++    }
++    pub(crate) fn pending_bytes(&self, key: &K) -> u64 {
++        self.keys
++            .get(key)
++            .and_then(|&i| self.slots[i].as_ref()?.pending.as_ref())
++            .map_or(0, |p| u64::from(p.message.bytes))
+     }
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:22:
+ /// An upsert replaces an existing key; remove is idempotent. Implementations must
+ /// contain no more than one *logical* entry per key and return the exact minimum.
+ pub trait ReadyQueue: Default {
+-    fn with_bound(_bound: usize) -> Self { Self::default() }
++    fn with_bound(_bound: usize) -> Self {
++        Self::default()
++    }
+     fn upsert(&mut self, entry: Entry);
+     fn remove(&mut self, id: usize);
+     fn peek(&mut self) -> Option<Entry>;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:29:
+     fn pop(&mut self) -> Option<Entry>;
+     fn len(&self) -> usize;
+-    fn is_empty(&self) -> bool { self.len() == 0 }
++    fn is_empty(&self) -> bool {
++        self.len() == 0
++    }
+ }
+ 
+ /// Packed indexed d-ary heap: bounded by the high-water slot count, no tombstones.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:39:
+ impl<const D: usize> Default for IndexedHeap<D> {
+     fn default() -> Self {
+         assert!(D >= 2);
+-        Self { heap: Vec::new(), positions: Vec::new() }
++        Self {
++            heap: Vec::new(),
++            positions: Vec::new(),
++        }
+     }
+ }
+ impl<const D: usize> IndexedHeap<D> {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:51:
+     fn up(&mut self, mut at: usize) -> usize {
+         while at > 0 {
+             let parent = (at - 1) / D;
+-            if self.heap[parent] <= self.heap[at] { break; }
++            if self.heap[parent] <= self.heap[at] {
++                break;
++            }
+             self.swap(parent, at);
+             at = parent;
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:60:
+     fn down(&mut self, mut at: usize) {
+         loop {
+             let first = at.saturating_mul(D).saturating_add(1);
+-            if first >= self.heap.len() { break; }
++            if first >= self.heap.len() {
++                break;
++            }
+             let end = first.saturating_add(D).min(self.heap.len());
+             let mut best = first;
+             for child in first + 1..end {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:67:
+-                if self.heap[child] < self.heap[best] { best = child; }
++                if self.heap[child] < self.heap[best] {
++                    best = child;
++                }
+             }
+-            if self.heap[at] <= self.heap[best] { break; }
++            if self.heap[at] <= self.heap[best] {
++                break;
++            }
+             self.swap(at, best);
+             at = best;
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:84:
+ }
+ impl<const D: usize> ReadyQueue for IndexedHeap<D> {
+     fn upsert(&mut self, entry: Entry) {
+-        if self.positions.len() <= entry.id { self.positions.resize(entry.id + 1, usize::MAX); }
++        if self.positions.len() <= entry.id {
++            self.positions.resize(entry.id + 1, usize::MAX);
++        }
+         let at = self.positions[entry.id];
+         if at == usize::MAX {
+             let at = self.heap.len();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:99:
+     }
+     fn remove(&mut self, id: usize) {
+         if let Some(&at) = self.positions.get(id) {
+-            if at != usize::MAX { self.remove_at(at); }
++            if at != usize::MAX {
++                self.remove_at(at);
++            }
+         }
+     }
+-    fn peek(&mut self) -> Option<Entry> { self.heap.first().copied() }
+-    fn pop(&mut self) -> Option<Entry> { (!self.heap.is_empty()).then(|| self.remove_at(0)) }
+-    fn len(&self) -> usize { self.heap.len() }
++    fn peek(&mut self) -> Option<Entry> {
++        self.heap.first().copied()
++    }
++    fn pop(&mut self) -> Option<Entry> {
++        (!self.heap.is_empty()).then(|| self.remove_at(0))
++    }
++    fn len(&self) -> usize {
++        self.heap.len()
++    }
+ }
+ 
+ /// Unsorted packed vector. Cheap updates and linear minimum selection.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:111:
+ #[derive(Default)]
+-pub struct ScanQueue { entries: Vec<Entry>, positions: Vec<usize> }
++pub struct ScanQueue {
++    entries: Vec<Entry>,
++    positions: Vec<usize>,
++}
+ impl ReadyQueue for ScanQueue {
+     fn upsert(&mut self, entry: Entry) {
+-        if self.positions.len() <= entry.id { self.positions.resize(entry.id + 1, usize::MAX); }
++        if self.positions.len() <= entry.id {
++            self.positions.resize(entry.id + 1, usize::MAX);
++        }
+         let at = self.positions[entry.id];
+         if at == usize::MAX {
+             self.positions[entry.id] = self.entries.len();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:119:
+             self.entries.push(entry);
+-        } else { self.entries[at] = entry; }
++        } else {
++            self.entries[at] = entry;
++        }
+     }
+     fn remove(&mut self, id: usize) {
+         if let Some(&at) = self.positions.get(id) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:124:
+             if at != usize::MAX {
+                 self.entries.swap_remove(at);
+                 self.positions[id] = usize::MAX;
+-                if at < self.entries.len() { self.positions[self.entries[at].id] = at; }
++                if at < self.entries.len() {
++                    self.positions[self.entries[at].id] = at;
++                }
+             }
+         }
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:131:
+-    fn peek(&mut self) -> Option<Entry> { self.entries.iter().min().copied() }
+-    fn pop(&mut self) -> Option<Entry> { let e = self.peek()?; self.remove(e.id); Some(e) }
+-    fn len(&self) -> usize { self.entries.len() }
++    fn peek(&mut self) -> Option<Entry> {
++        self.entries.iter().min().copied()
++    }
++    fn pop(&mut self) -> Option<Entry> {
++        let e = self.peek()?;
++        self.remove(e.id);
++        Some(e)
++    }
++    fn len(&self) -> usize {
++        self.entries.len()
++    }
+ }
+ 
+ /// Packed scan with a cached minimum. Non-minimum updates keep the cache valid;
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:137:
+ /// a peek followed by a pop performs only one minimum search.
+ #[derive(Default)]
+-pub struct CachedScan { inner:ScanQueue, minimum:Option<Entry>, valid:bool }
++pub struct CachedScan {
++    inner: ScanQueue,
++    minimum: Option<Entry>,
++    valid: bool,
++}
+ impl ReadyQueue for CachedScan {
+-    fn upsert(&mut self,e:Entry) {
+-        let old=self.inner.positions.get(e.id).and_then(|&p|self.inner.entries.get(p)).copied();
++    fn upsert(&mut self, e: Entry) {
++        let old = self
++            .inner
++            .positions
++            .get(e.id)
++            .and_then(|&p| self.inner.entries.get(p))
++            .copied();
+         self.inner.upsert(e);
+         if self.valid {
+-            if self.minimum.is_none_or(|m|e<m) { self.minimum=Some(e); }
+-            else if old==self.minimum && old!=Some(e) { self.valid=false; }
++            if self.minimum.is_none_or(|m| e < m) {
++                self.minimum = Some(e);
++            } else if old == self.minimum && old != Some(e) {
++                self.valid = false;
++            }
+         }
+     }
+-    fn remove(&mut self,id:usize) {
++    fn remove(&mut self, id: usize) {
+         self.inner.remove(id);
+-        if self.minimum.is_some_and(|e|e.id==id) { self.valid=false; }
++        if self.minimum.is_some_and(|e| e.id == id) {
++            self.valid = false;
++        }
+     }
+-    fn peek(&mut self)->Option<Entry> {
+-        if !self.valid { self.minimum=self.inner.peek(); self.valid=true; }
++    fn peek(&mut self) -> Option<Entry> {
++        if !self.valid {
++            self.minimum = self.inner.peek();
++            self.valid = true;
++        }
+         self.minimum
+     }
+-    fn pop(&mut self)->Option<Entry> { let e=self.peek()?; self.remove(e.id); Some(e) }
+-    fn len(&self)->usize {self.inner.len()}
++    fn pop(&mut self) -> Option<Entry> {
++        let e = self.peek()?;
++        self.remove(e.id);
++        Some(e)
++    }
++    fn len(&self) -> usize {
++        self.inner.len()
++    }
+ }
+ 
+ /// Binary tournament tree over slot indices. Updating an entry stops at the first
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:162:
+ /// unchanged subtree minimum. Capacity grows geometrically with actual slot use.
+-pub struct Tournament { tree:Vec<Option<Entry>>, bound:usize, live:usize }
++pub struct Tournament {
++    tree: Vec<Option<Entry>>,
++    bound: usize,
++    live: usize,
++}
+ impl Default for Tournament {
+-    fn default()->Self {Self {tree:vec![None;2],bound:1,live:0}}
++    fn default() -> Self {
++        Self {
++            tree: vec![None; 2],
++            bound: 1,
++            live: 0,
++        }
++    }
+ }
+-fn minimum(a:Option<Entry>,b:Option<Entry>)->Option<Entry> {
+-    match (a,b) { (Some(a),Some(b))=>Some(a.min(b)),(a,None)=>a,(None,b)=>b }
++fn minimum(a: Option<Entry>, b: Option<Entry>) -> Option<Entry> {
++    match (a, b) {
++        (Some(a), Some(b)) => Some(a.min(b)),
++        (a, None) => a,
++        (None, b) => b,
++    }
+ }
+ impl Tournament {
+-    fn set(&mut self,id:usize,value:Option<Entry>) {
+-        if id>=self.bound { return; }
+-        let mut at=self.bound+id;
+-        self.tree[at]=value;
+-        while at>1 {
+-            at/=2;
+-            let next=minimum(self.tree[at*2],self.tree[at*2+1]);
+-            if next==self.tree[at] { break; }
+-            self.tree[at]=next;
++    fn set(&mut self, id: usize, value: Option<Entry>) {
++        if id >= self.bound {
++            return;
+         }
++        let mut at = self.bound + id;
++        self.tree[at] = value;
++        while at > 1 {
++            at /= 2;
++            let next = minimum(self.tree[at * 2], self.tree[at * 2 + 1]);
++            if next == self.tree[at] {
++                break;
++            }
++            self.tree[at] = next;
++        }
+     }
+ }
+ impl ReadyQueue for Tournament {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:184:
+-    fn upsert(&mut self,e:Entry) {
+-        if e.id>=self.bound {
+-            let bound=(e.id+1).next_power_of_two();
+-            let mut next=vec![None;bound*2];
+-            next[bound..bound+self.bound].copy_from_slice(&self.tree[self.bound..self.bound*2]);
+-            for at in (1..bound).rev() {next[at]=minimum(next[at*2],next[at*2+1]);}
+-            self.tree=next; self.bound=bound;
++    fn upsert(&mut self, e: Entry) {
++        if e.id >= self.bound {
++            let bound = (e.id + 1).next_power_of_two();
++            let mut next = vec![None; bound * 2];
++            next[bound..bound + self.bound].copy_from_slice(&self.tree[self.bound..self.bound * 2]);
++            for at in (1..bound).rev() {
++                next[at] = minimum(next[at * 2], next[at * 2 + 1]);
++            }
++            self.tree = next;
++            self.bound = bound;
+         }
+-        if self.tree[self.bound+e.id].is_none() { self.live+=1; }
+-        self.set(e.id,Some(e));
++        if self.tree[self.bound + e.id].is_none() {
++            self.live += 1;
++        }
++        self.set(e.id, Some(e));
+     }
+-    fn remove(&mut self,id:usize) {
+-        if id<self.bound && self.tree[self.bound+id].is_some() {self.live-=1;self.set(id,None);}
++    fn remove(&mut self, id: usize) {
++        if id < self.bound && self.tree[self.bound + id].is_some() {
++            self.live -= 1;
++            self.set(id, None);
++        }
+     }
+-    fn peek(&mut self)->Option<Entry> {self.tree[1]}
+-    fn pop(&mut self)->Option<Entry> {let e=self.tree[1]?;self.remove(e.id);Some(e)}
+-    fn len(&self)->usize {self.live}
++    fn peek(&mut self) -> Option<Entry> {
++        self.tree[1]
++    }
++    fn pop(&mut self) -> Option<Entry> {
++        let e = self.tree[1]?;
++        self.remove(e.id);
++        Some(e)
++    }
++    fn len(&self) -> usize {
++        self.live
++    }
+ }
+ 
+ /// Cached scans for small queues, with one-way promotion to a 4-ary heap.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:204:
+-pub struct CachedHybrid<const N:usize> { scan:CachedScan, heap:Option<IndexedHeap<4>> }
+-impl<const N:usize> Default for CachedHybrid<N> {
+-    fn default()->Self {Self {scan:CachedScan::default(),heap:None}}
++pub struct CachedHybrid<const N: usize> {
++    scan: CachedScan,
++    heap: Option<IndexedHeap<4>>,
+ }
+-impl<const N:usize> ReadyQueue for CachedHybrid<N> {
+-    fn upsert(&mut self,e:Entry) {
+-        if let Some(h)=&mut self.heap {h.upsert(e);return;}
++impl<const N: usize> Default for CachedHybrid<N> {
++    fn default() -> Self {
++        Self {
++            scan: CachedScan::default(),
++            heap: None,
++        }
++    }
++}
++impl<const N: usize> ReadyQueue for CachedHybrid<N> {
++    fn upsert(&mut self, e: Entry) {
++        if let Some(h) = &mut self.heap {
++            h.upsert(e);
++            return;
++        }
+         self.scan.upsert(e);
+-        if self.scan.len()>N {
+-            let mut heap=IndexedHeap::default();
+-            for &entry in &self.scan.inner.entries {heap.upsert(entry);}
+-            self.scan=CachedScan::default(); self.heap=Some(heap);
++        if self.scan.len() > N {
++            let mut heap = IndexedHeap::default();
++            for &entry in &self.scan.inner.entries {
++                heap.upsert(entry);
++            }
++            self.scan = CachedScan::default();
++            self.heap = Some(heap);
+         }
+     }
+-    fn remove(&mut self,id:usize) {if let Some(h)=&mut self.heap {h.remove(id)} else {self.scan.remove(id)}}
+-    fn peek(&mut self)->Option<Entry> {if let Some(h)=&mut self.heap {h.peek()} else {self.scan.peek()}}
+-    fn pop(&mut self)->Option<Entry> {if let Some(h)=&mut self.heap {h.pop()} else {self.scan.pop()}}
+-    fn len(&self)->usize {if let Some(h)=&self.heap {h.len()} else {self.scan.len()}}
++    fn remove(&mut self, id: usize) {
++        if let Some(h) = &mut self.heap {
++            h.remove(id)
++        } else {
++            self.scan.remove(id)
++        }
++    }
++    fn peek(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            h.peek()
++        } else {
++            self.scan.peek()
++        }
++    }
++    fn pop(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            h.pop()
++        } else {
++            self.scan.pop()
++        }
++    }
++    fn len(&self) -> usize {
++        if let Some(h) = &self.heap {
++            h.len()
++        } else {
++            self.scan.len()
++        }
++    }
+ }
+ 
+ /// Keep batch-friendly sorted runs until the observed mutation pattern becomes
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:225:
+ /// interleaved. Small sets use a cached scan. A small mutation batch after an
+ /// existing sorted run promotes once to a heap; promotion never changes ordering.
+ /// This policy uses observed queue operations, not application/workload names.
+-pub struct AdaptiveQueue<const N:usize=8> {
+-    scan:CachedScan, sorted:Vec<Entry>, valid:bool, used_sorted:bool,
+-    mutations:usize, heap:Option<IndexedHeap<4>>,
++pub struct AdaptiveQueue<const N: usize = 8> {
++    scan: CachedScan,
++    sorted: Vec<Entry>,
++    valid: bool,
++    used_sorted: bool,
++    mutations: usize,
++    heap: Option<IndexedHeap<4>>,
+ }
+-impl<const N:usize> Default for AdaptiveQueue<N> {
+-    fn default()->Self {Self {scan:CachedScan::default(),sorted:Vec::new(),valid:false,used_sorted:false,mutations:0,heap:None}}
++impl<const N: usize> Default for AdaptiveQueue<N> {
++    fn default() -> Self {
++        Self {
++            scan: CachedScan::default(),
++            sorted: Vec::new(),
++            valid: false,
++            used_sorted: false,
++            mutations: 0,
++            heap: None,
++        }
++    }
+ }
+-impl<const N:usize> ReadyQueue for AdaptiveQueue<N> {
+-    fn upsert(&mut self,e:Entry) {
+-        if let Some(h)=&mut self.heap {h.upsert(e);return;}
+-        if self.scan.inner.positions.get(e.id).and_then(|&p|self.scan.inner.entries.get(p))==Some(&e) {return;}
+-        self.scan.upsert(e); self.mutations=self.mutations.saturating_add(1); self.valid=false;
++impl<const N: usize> ReadyQueue for AdaptiveQueue<N> {
++    fn upsert(&mut self, e: Entry) {
++        if let Some(h) = &mut self.heap {
++            h.upsert(e);
++            return;
++        }
++        if self
++            .scan
++            .inner
++            .positions
++            .get(e.id)
++            .and_then(|&p| self.scan.inner.entries.get(p))
++            == Some(&e)
++        {
++            return;
++        }
++        self.scan.upsert(e);
++        self.mutations = self.mutations.saturating_add(1);
++        self.valid = false;
+     }
+-    fn remove(&mut self,id:usize) {
+-        if let Some(h)=&mut self.heap {h.remove(id);return;}
+-        let before=self.scan.len(); self.scan.remove(id);
+-        if self.scan.len()!=before {self.mutations=self.mutations.saturating_add(1);self.valid=false;}
++    fn remove(&mut self, id: usize) {
++        if let Some(h) = &mut self.heap {
++            h.remove(id);
++            return;
++        }
++        let before = self.scan.len();
++        self.scan.remove(id);
++        if self.scan.len() != before {
++            self.mutations = self.mutations.saturating_add(1);
++            self.valid = false;
++        }
+     }
+-    fn peek(&mut self)->Option<Entry> {
+-        if let Some(h)=&mut self.heap {return h.peek();}
+-        if self.scan.len()<=N {return self.scan.peek();}
++    fn peek(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            return h.peek();
++        }
++        if self.scan.len() <= N {
++            return self.scan.peek();
++        }
+         if !self.valid {
+-            if self.used_sorted && self.mutations>0 && self.mutations<self.scan.len()/4 {
+-                let mut h=IndexedHeap::default();
+-                for &entry in &self.scan.inner.entries {h.upsert(entry);}
+-                self.scan=CachedScan::default();self.sorted=Vec::new();self.heap=Some(h);
++            if self.used_sorted && self.mutations > 0 && self.mutations < self.scan.len() / 4 {
++                let mut h = IndexedHeap::default();
++                for &entry in &self.scan.inner.entries {
++                    h.upsert(entry);
++                }
++                self.scan = CachedScan::default();
++                self.sorted = Vec::new();
++                self.heap = Some(h);
+                 return self.heap.as_mut().unwrap().peek();
+             }
+-            self.sorted.clear();self.sorted.extend_from_slice(&self.scan.inner.entries);
+-            self.sorted.sort_unstable_by(|a,b|b.cmp(a));
+-            self.valid=true;self.used_sorted=true;self.mutations=0;
++            self.sorted.clear();
++            self.sorted.extend_from_slice(&self.scan.inner.entries);
++            self.sorted.sort_unstable_by(|a, b| b.cmp(a));
++            self.valid = true;
++            self.used_sorted = true;
++            self.mutations = 0;
+         }
+         self.sorted.last().copied()
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:262:
+-    fn pop(&mut self)->Option<Entry> {
+-        if let Some(h)=&mut self.heap {return h.pop();}
+-        if self.scan.len()<=N {
+-            let e=self.scan.pop(); if e.is_some() {self.valid=false;} return e;
++    fn pop(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            return h.pop();
+         }
++        if self.scan.len() <= N {
++            let e = self.scan.pop();
++            if e.is_some() {
++                self.valid = false;
++            }
++            return e;
++        }
+         self.peek()?;
+-        if let Some(h)=&mut self.heap {return h.pop();}
+-        let e=self.sorted.pop()?;self.scan.remove(e.id);Some(e)
++        if let Some(h) = &mut self.heap {
++            return h.pop();
++        }
++        let e = self.sorted.pop()?;
++        self.scan.remove(e.id);
++        Some(e)
+     }
+-    fn len(&self)->usize {if let Some(h)=&self.heap {h.len()} else {self.scan.len()}}
++    fn len(&self) -> usize {
++        if let Some(h) = &self.heap {
++            h.len()
++        } else {
++            self.scan.len()
++        }
++    }
+ }
+ 
+ /// Sorted-on-demand batches; mutations invalidate the sorted run.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:275:
+ #[derive(Default)]
+-pub struct SortedQueue { inner: ScanQueue, sorted: Vec<Entry>, dirty: bool }
++pub struct SortedQueue {
++    inner: ScanQueue,
++    sorted: Vec<Entry>,
++    dirty: bool,
++}
+ impl ReadyQueue for SortedQueue {
+-    fn upsert(&mut self, e: Entry) { self.inner.upsert(e); self.dirty = true; }
+-    fn remove(&mut self, id: usize) { self.inner.remove(id); self.dirty = true; }
++    fn upsert(&mut self, e: Entry) {
++        self.inner.upsert(e);
++        self.dirty = true;
++    }
++    fn remove(&mut self, id: usize) {
++        self.inner.remove(id);
++        self.dirty = true;
++    }
+     fn peek(&mut self) -> Option<Entry> {
+         if self.dirty {
+-            self.sorted.clear(); self.sorted.extend_from_slice(&self.inner.entries);
+-            self.sorted.sort_unstable_by(|a,b| b.cmp(a)); self.dirty = false;
++            self.sorted.clear();
++            self.sorted.extend_from_slice(&self.inner.entries);
++            self.sorted.sort_unstable_by(|a, b| b.cmp(a));
++            self.dirty = false;
+         }
+         self.sorted.last().copied()
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:287:
+     fn pop(&mut self) -> Option<Entry> {
+-        let e = self.peek()?; self.sorted.pop(); self.inner.remove(e.id); Some(e)
++        let e = self.peek()?;
++        self.sorted.pop();
++        self.inner.remove(e.id);
++        Some(e)
+     }
+-    fn len(&self) -> usize { self.inner.len() }
++    fn len(&self) -> usize {
++        self.inner.len()
++    }
+ }
+ 
+ #[derive(Default)]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:294:
+-pub struct TreeQueue { tree: BTreeSet<Entry>, slots: Vec<Option<Entry>> }
++pub struct TreeQueue {
++    tree: BTreeSet<Entry>,
++    slots: Vec<Option<Entry>>,
++}
+ impl ReadyQueue for TreeQueue {
+     fn upsert(&mut self, e: Entry) {
+-        if self.slots.len() <= e.id { self.slots.resize(e.id + 1, None); }
+-        if let Some(old) = self.slots[e.id].replace(e) { self.tree.remove(&old); }
++        if self.slots.len() <= e.id {
++            self.slots.resize(e.id + 1, None);
++        }
++        if let Some(old) = self.slots[e.id].replace(e) {
++            self.tree.remove(&old);
++        }
+         self.tree.insert(e);
+     }
+     fn remove(&mut self, id: usize) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:302:
+-        if let Some(slot) = self.slots.get_mut(id) { if let Some(old) = slot.take() { self.tree.remove(&old); } }
++        if let Some(slot) = self.slots.get_mut(id) {
++            if let Some(old) = slot.take() {
++                self.tree.remove(&old);
++            }
++        }
+     }
+-    fn peek(&mut self) -> Option<Entry> { self.tree.first().copied() }
++    fn peek(&mut self) -> Option<Entry> {
++        self.tree.first().copied()
++    }
+     fn pop(&mut self) -> Option<Entry> {
+-        let e = self.tree.pop_first()?; self.slots[e.id] = None; Some(e)
++        let e = self.tree.pop_first()?;
++        self.slots[e.id] = None;
++        Some(e)
+     }
+-    fn len(&self) -> usize { self.tree.len() }
++    fn len(&self) -> usize {
++        self.tree.len()
++    }
+ }
+ 
+ /// Standard-library heap with bounded lazy deletion. Rebuild at 2*live+32 entries.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:312:
+ /// Compaction is included in every measured lifecycle.
+ #[derive(Default)]
+-pub struct LazyHeap { heap: BinaryHeap<Reverse<Entry>>, slots: Vec<Option<Entry>>, live: usize }
++pub struct LazyHeap {
++    heap: BinaryHeap<Reverse<Entry>>,
++    slots: Vec<Option<Entry>>,
++    live: usize,
++}
+ impl LazyHeap {
+     fn compact(&mut self) {
+         if self.heap.len() > self.live.saturating_mul(2).saturating_add(32) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:322:
+ 
+ /// Scan small queues, promote once to an indexed heap when the threshold is
+ /// exceeded. Promotion cost is included; no per-pop conversion or hidden warmup.
+-pub struct Hybrid<const N: usize> { scan: ScanQueue, heap: Option<IndexedHeap<4>> }
++pub struct Hybrid<const N: usize> {
++    scan: ScanQueue,
++    heap: Option<IndexedHeap<4>>,
++}
+ impl<const N: usize> Default for Hybrid<N> {
+-    fn default() -> Self { Self { scan: ScanQueue::default(), heap: None } }
++    fn default() -> Self {
++        Self {
++            scan: ScanQueue::default(),
++            heap: None,
++        }
++    }
+ }
+ impl<const N: usize> ReadyQueue for Hybrid<N> {
+     fn upsert(&mut self, e: Entry) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:331:
+-        if let Some(h) = &mut self.heap { h.upsert(e); return; }
++        if let Some(h) = &mut self.heap {
++            h.upsert(e);
++            return;
++        }
+         self.scan.upsert(e);
+         if self.scan.len() > N {
+             let mut h = IndexedHeap::default();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:335:
+-            for &entry in &self.scan.entries { h.upsert(entry); }
++            for &entry in &self.scan.entries {
++                h.upsert(entry);
++            }
+             self.scan = ScanQueue::default();
+             self.heap = Some(h);
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:339:
+     }
+-    fn remove(&mut self, id: usize) { if let Some(h) = &mut self.heap { h.remove(id) } else { self.scan.remove(id) } }
+-    fn peek(&mut self) -> Option<Entry> { if let Some(h) = &mut self.heap { h.peek() } else { self.scan.peek() } }
+-    fn pop(&mut self) -> Option<Entry> { if let Some(h) = &mut self.heap { h.pop() } else { self.scan.pop() } }
+-    fn len(&self) -> usize { if let Some(h) = &self.heap { h.len() } else { self.scan.len() } }
++    fn remove(&mut self, id: usize) {
++        if let Some(h) = &mut self.heap {
++            h.remove(id)
++        } else {
++            self.scan.remove(id)
++        }
++    }
++    fn peek(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            h.peek()
++        } else {
++            self.scan.peek()
++        }
++    }
++    fn pop(&mut self) -> Option<Entry> {
++        if let Some(h) = &mut self.heap {
++            h.pop()
++        } else {
++            self.scan.pop()
++        }
++    }
++    fn len(&self) -> usize {
++        if let Some(h) = &self.heap {
++            h.len()
++        } else {
++            self.scan.len()
++        }
++    }
+ }
+ impl ReadyQueue for LazyHeap {
+     fn upsert(&mut self, e: Entry) {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:347:
+-        if self.slots.len() <= e.id { self.slots.resize(e.id + 1, None); }
+-        if self.slots[e.id] == Some(e) { return; }
+-        if self.slots[e.id].replace(e).is_none() { self.live += 1; }
+-        self.heap.push(Reverse(e)); self.compact();
++        if self.slots.len() <= e.id {
++            self.slots.resize(e.id + 1, None);
++        }
++        if self.slots[e.id] == Some(e) {
++            return;
++        }
++        if self.slots[e.id].replace(e).is_none() {
++            self.live += 1;
++        }
++        self.heap.push(Reverse(e));
++        self.compact();
+     }
+     fn remove(&mut self, id: usize) {
+-        if self.slots.get_mut(id).and_then(Option::take).is_some() { self.live -= 1; }
++        if self.slots.get_mut(id).and_then(Option::take).is_some() {
++            self.live -= 1;
++        }
+         self.compact();
+     }
+     fn peek(&mut self) -> Option<Entry> {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:357:
+         while let Some(&Reverse(e)) = self.heap.peek() {
+-            if self.slots[e.id] == Some(e) { return Some(e); }
++            if self.slots[e.id] == Some(e) {
++                return Some(e);
++            }
+             self.heap.pop();
+         }
+         None
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:362:
+     }
+     fn pop(&mut self) -> Option<Entry> {
+-        let e = self.peek()?; self.heap.pop(); self.slots[e.id] = None;
+-        self.live -= 1; self.compact(); Some(e)
++        let e = self.peek()?;
++        self.heap.pop();
++        self.slots[e.id] = None;
++        self.live -= 1;
++        self.compact();
++        Some(e)
+     }
+-    fn len(&self) -> usize { self.live }
++    fn len(&self) -> usize {
++        self.live
++    }
+ }
+ 
+ #[cfg(feature = "comparisons")]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:373:
+     #[derive(Default)]
+     pub struct Priority(pub priority_queue::PriorityQueue<usize, Reverse<Entry>>);
+     impl ReadyQueue for Priority {
+-        fn upsert(&mut self, e: Entry) { self.0.push(e.id, Reverse(e)); }
+-        fn remove(&mut self, id: usize) { self.0.remove(&id); }
+-        fn peek(&mut self) -> Option<Entry> { self.0.peek().map(|(_,&Reverse(e))| e) }
+-        fn pop(&mut self) -> Option<Entry> { self.0.pop().map(|(_,Reverse(e))| e) }
+-        fn len(&self) -> usize { self.0.len() }
++        fn upsert(&mut self, e: Entry) {
++            self.0.push(e.id, Reverse(e));
++        }
++        fn remove(&mut self, id: usize) {
++            self.0.remove(&id);
++        }
++        fn peek(&mut self) -> Option<Entry> {
++            self.0.peek().map(|(_, &Reverse(e))| e)
++        }
++        fn pop(&mut self) -> Option<Entry> {
++            self.0.pop().map(|(_, Reverse(e))| e)
++        }
++        fn len(&self) -> usize {
++            self.0.len()
++        }
+     }
+     #[derive(Default)]
+     pub struct Keyed(pub keyed_priority_queue::KeyedPriorityQueue<usize, Reverse<Entry>>);
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:384:
+     impl ReadyQueue for Keyed {
+-        fn upsert(&mut self, e: Entry) { self.0.push(e.id, Reverse(e)); }
+-        fn remove(&mut self, id: usize) { self.0.remove(&id); }
+-        fn peek(&mut self) -> Option<Entry> { self.0.peek().map(|(_,&Reverse(e))| e) }
+-        fn pop(&mut self) -> Option<Entry> { self.0.pop().map(|(_,Reverse(e))| e) }
+-        fn len(&self) -> usize { self.0.len() }
++        fn upsert(&mut self, e: Entry) {
++            self.0.push(e.id, Reverse(e));
++        }
++        fn remove(&mut self, id: usize) {
++            self.0.remove(&id);
++        }
++        fn peek(&mut self) -> Option<Entry> {
++            self.0.peek().map(|(_, &Reverse(e))| e)
++        }
++        fn pop(&mut self) -> Option<Entry> {
++            self.0.pop().map(|(_, Reverse(e))| e)
++        }
++        fn len(&self) -> usize {
++            self.0.len()
++        }
+     }
+ 
+     use orx_priority_queue::{PriorityQueue, PriorityQueueDecKey};
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:393:
+-    pub struct OrxMap<const D: usize>(pub orx_priority_queue::DaryHeapWithMap<usize,Entry,D>);
+-    impl<const D: usize> Default for OrxMap<D> { fn default() -> Self { Self(Default::default()) } }
++    pub struct OrxMap<const D: usize>(pub orx_priority_queue::DaryHeapWithMap<usize, Entry, D>);
++    impl<const D: usize> Default for OrxMap<D> {
++        fn default() -> Self {
++            Self(Default::default())
++        }
++    }
+     impl<const D: usize> ReadyQueue for OrxMap<D> {
+-        fn upsert(&mut self, e: Entry) { self.0.update_key_or_push(&e.id, e); }
+-        fn remove(&mut self, id: usize) { if self.0.contains(&id) { self.0.remove(&id); } }
+-        fn peek(&mut self) -> Option<Entry> { self.0.peek().map(|(_,e)| *e) }
+-        fn pop(&mut self) -> Option<Entry> { self.0.pop().map(|(_,e)| e) }
+-        fn len(&self) -> usize { self.0.len() }
++        fn upsert(&mut self, e: Entry) {
++            self.0.update_key_or_push(&e.id, e);
++        }
++        fn remove(&mut self, id: usize) {
++            if self.0.contains(&id) {
++                self.0.remove(&id);
++            }
++        }
++        fn peek(&mut self) -> Option<Entry> {
++            self.0.peek().map(|(_, e)| *e)
++        }
++        fn pop(&mut self) -> Option<Entry> {
++            self.0.pop().map(|(_, e)| e)
++        }
++        fn len(&self) -> usize {
++            self.0.len()
++        }
+     }
+-    pub struct OrxIndex<const D: usize>(pub orx_priority_queue::DaryHeapOfIndices<usize,Entry,D>);
++    pub struct OrxIndex<const D: usize>(pub orx_priority_queue::DaryHeapOfIndices<usize, Entry, D>);
+     impl<const D: usize> Default for OrxIndex<D> {
+-        fn default() -> Self { Self(orx_priority_queue::DaryHeapOfIndices::with_index_bound(1)) }
++        fn default() -> Self {
++            Self(orx_priority_queue::DaryHeapOfIndices::with_index_bound(1))
++        }
+     }
+     impl<const D: usize> ReadyQueue for OrxIndex<D> {
+-        fn with_bound(bound: usize) -> Self { Self(orx_priority_queue::DaryHeapOfIndices::with_index_bound(bound.max(1))) }
++        fn with_bound(bound: usize) -> Self {
++            Self(orx_priority_queue::DaryHeapOfIndices::with_index_bound(
++                bound.max(1),
++            ))
++        }
+         fn upsert(&mut self, e: Entry) {
+             if e.id >= self.0.index_bound() {
+                 let bound = (e.id + 1).next_power_of_two();
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:411:
+                 let mut next = orx_priority_queue::DaryHeapOfIndices::with_index_bound(bound);
+-                while let Some((id,rank)) = self.0.pop() { next.push(id,rank); }
++                while let Some((id, rank)) = self.0.pop() {
++                    next.push(id, rank);
++                }
+                 self.0 = next;
+             }
+             self.0.update_key_or_push(&e.id, e);
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/src/queue.rs:416:
+         }
+         fn remove(&mut self, id: usize) {
+-            if id < self.0.index_bound() && self.0.contains(&id) { self.0.remove(&id); }
++            if id < self.0.index_bound() && self.0.contains(&id) {
++                self.0.remove(&id);
++            }
+         }
+-        fn peek(&mut self) -> Option<Entry> { self.0.peek().map(|(_,e)| *e) }
+-        fn pop(&mut self) -> Option<Entry> { self.0.pop().map(|(_,e)| e) }
+-        fn len(&self) -> usize { self.0.len() }
++        fn peek(&mut self) -> Option<Entry> {
++            self.0.peek().map(|(_, e)| *e)
++        }
++        fn pop(&mut self) -> Option<Entry> {
++            self.0.pop().map(|(_, e)| e)
++        }
++        fn len(&self) -> usize {
++            self.0.len()
++        }
+     }
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:1:
+ use rill_delivery::*;
+ use std::sync::Arc;
+ 
+-fn message(v:u64,bytes:u32)->Message<u64> { Message::new(Arc::new(v),bytes).unwrap() }
+-fn config()->PeerConfig {
+-    PeerConfig { limits:Limits {states:64,events:8,bytes:4096,max_message_bytes:256},
+-                 burst:4096,bytes_per_tick:4096,quantum:4096 }
++fn message(v: u64, bytes: u32) -> Message<u64> {
++    Message::new(Arc::new(v), bytes).unwrap()
+ }
+-fn budget(bytes:u64)->DispatchBudget { DispatchBudget {bytes,per_peer_bytes:4096,deliveries:100000,visits:20000} }
++fn config() -> PeerConfig {
++    PeerConfig {
++        limits: Limits {
++            states: 64,
++            events: 8,
++            bytes: 4096,
++            max_message_bytes: 256,
++        },
++        burst: 4096,
++        bytes_per_tick: 4096,
++        quantum: 4096,
++    }
++}
++fn budget(bytes: u64) -> DispatchBudget {
++    DispatchBudget {
++        bytes,
++        per_peer_bytes: 4096,
++        deliveries: 100000,
++        visits: 20000,
++    }
++}
+ 
+ #[test]
+ fn twenty_thousand_recipients_converge_with_exact_limits() {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:13:
+-    let mut d=Dispatcher::<u64,u64>::new(20000,1<<26).unwrap();
+-    let mut cfg=config(); cfg.quantum=8;
+-    let peers:Vec<_>=(0..20000).map(|_|d.add_peer(cfg).unwrap()).collect();
+-    let shared=message(123,16);
+-    for &peer in &peers { d.offer_state(peer,11,1,shared.clone(),0,0).unwrap(); }
+-    assert_eq!(d.buffered_bytes(),320000);
+-    let mut out=Vec::new();
+-    let first=d.dispatch_into(0,budget(320000),&mut out).unwrap();
+-    assert_eq!(first.bytes,0); assert_eq!(first.visits,20000);
+-    let second=d.dispatch_into(1,budget(320000),&mut out).unwrap();
+-    assert_eq!(second.bytes,320000); assert_eq!(out.len(),20000);
+-    assert_eq!(d.ready_peers(),0);
++    let mut d = Dispatcher::<u64, u64>::new(20000, 1 << 26).unwrap();
++    let mut cfg = config();
++    cfg.quantum = 8;
++    let peers: Vec<_> = (0..20000).map(|_| d.add_peer(cfg).unwrap()).collect();
++    let shared = message(123, 16);
++    for &peer in &peers {
++        d.offer_state(peer, 11, 1, shared.clone(), 0, 0).unwrap();
++    }
++    assert_eq!(d.buffered_bytes(), 320000);
++    let mut out = Vec::new();
++    let first = d.dispatch_into(0, budget(320000), &mut out).unwrap();
++    assert_eq!(first.bytes, 0);
++    assert_eq!(first.visits, 20000);
++    let second = d.dispatch_into(1, budget(320000), &mut out).unwrap();
++    assert_eq!(second.bytes, 320000);
++    assert_eq!(out.len(), 20000);
++    assert_eq!(d.ready_peers(), 0);
+     // In-flight payloads remain charged until actual ACK.
+-    assert_eq!(d.buffered_bytes(),320000);
+-    for e in out.drain(..) { assert!(d.ack(e.peer,e.delivery.receipt)); }
+-    assert_eq!(d.buffered_bytes(),0);
+-    for peer in peers { assert_eq!(d.progress(peer,&11).unwrap().acknowledged,Some(1)); }
++    assert_eq!(d.buffered_bytes(), 320000);
++    for e in out.drain(..) {
++        assert!(d.ack(e.peer, e.delivery.receipt));
++    }
++    assert_eq!(d.buffered_bytes(), 0);
++    for peer in peers {
++        assert_eq!(d.progress(peer, &11).unwrap().acknowledged, Some(1));
++    }
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:33:
+ fn byte_credit_weights_and_rotation_avoid_starvation() {
+-    let mut d=Dispatcher::<u64,u64>::new(2,4096).unwrap();
+-    let mut cfg=config(); cfg.quantum=1;
+-    let a=d.add_peer(cfg).unwrap(); cfg.quantum=3; let b=d.add_peer(cfg).unwrap();
+-    for peer in [a,b] { for key in 0..64 { d.offer_state(peer,key,1,message(key,1),0,0).unwrap(); } }
+-    let mut counts=[0,0]; let mut out=Vec::new();
++    let mut d = Dispatcher::<u64, u64>::new(2, 4096).unwrap();
++    let mut cfg = config();
++    cfg.quantum = 1;
++    let a = d.add_peer(cfg).unwrap();
++    cfg.quantum = 3;
++    let b = d.add_peer(cfg).unwrap();
++    for peer in [a, b] {
++        for key in 0..64 {
++            d.offer_state(peer, key, 1, message(key, 1), 0, 0).unwrap();
++        }
++    }
++    let mut counts = [0, 0];
++    let mut out = Vec::new();
+     for tick in 0..8 {
+-        let result=d.dispatch_into(tick,budget(4),&mut out).unwrap();
+-        assert_eq!(result.bytes,4);
+-        for e in out.drain(..) { counts[usize::from(e.peer==b)]+=1; assert!(d.ack(e.peer,e.delivery.receipt)); }
++        let result = d.dispatch_into(tick, budget(4), &mut out).unwrap();
++        assert_eq!(result.bytes, 4);
++        for e in out.drain(..) {
++            counts[usize::from(e.peer == b)] += 1;
++            assert!(d.ack(e.peer, e.delivery.receipt));
++        }
+     }
+-    assert_eq!(counts,[8,24]);
++    assert_eq!(counts, [8, 24]);
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:48:
+ fn removal_unlinks_active_peers_and_reconnect_rejects_old_handles() {
+-    let mut d=Dispatcher::<u64,u64>::new(3,4096).unwrap();
+-    let a=d.add_peer(config()).unwrap(); let b=d.add_peer(config()).unwrap(); let c=d.add_peer(config()).unwrap();
+-    for peer in [a,b,c] { d.offer_state(peer,1,1,message(1,16),0,0).unwrap(); }
+-    assert!(d.remove_peer(b)); assert_eq!(d.ready_peers(),2); assert_eq!(d.buffered_bytes(),32);
+-    let new=d.add_peer(config()).unwrap(); assert_ne!(new,b);
+-    assert_eq!(d.offer_state(b,1,1,message(1,1),0,0),Err(Error::UnknownPeer));
+-    d.offer_state(new,1,1,message(1,16),0,0).unwrap();
+-    assert!(d.remove_peer(a)); assert!(d.remove_peer(new));
+-    let mut out=Vec::new(); d.dispatch_into(0,budget(4096),&mut out).unwrap();
+-    assert_eq!(out.len(),1); assert_eq!(out[0].peer,c);
+-    assert!(!d.ack(new,out[0].delivery.receipt));
+-    assert!(d.ack(c,out[0].delivery.receipt));
+-    assert_eq!(d.buffered_bytes(),0);
++    let mut d = Dispatcher::<u64, u64>::new(3, 4096).unwrap();
++    let a = d.add_peer(config()).unwrap();
++    let b = d.add_peer(config()).unwrap();
++    let c = d.add_peer(config()).unwrap();
++    for peer in [a, b, c] {
++        d.offer_state(peer, 1, 1, message(1, 16), 0, 0).unwrap();
++    }
++    assert!(d.remove_peer(b));
++    assert_eq!(d.ready_peers(), 2);
++    assert_eq!(d.buffered_bytes(), 32);
++    let new = d.add_peer(config()).unwrap();
++    assert_ne!(new, b);
++    assert_eq!(
++        d.offer_state(b, 1, 1, message(1, 1), 0, 0),
++        Err(Error::UnknownPeer)
++    );
++    d.offer_state(new, 1, 1, message(1, 16), 0, 0).unwrap();
++    assert!(d.remove_peer(a));
++    assert!(d.remove_peer(new));
++    let mut out = Vec::new();
++    d.dispatch_into(0, budget(4096), &mut out).unwrap();
++    assert_eq!(out.len(), 1);
++    assert_eq!(out[0].peer, c);
++    assert!(!d.ack(new, out[0].delivery.receipt));
++    assert!(d.ack(c, out[0].delivery.receipt));
++    assert_eq!(d.buffered_bytes(), 0);
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:65:
+ fn global_capacity_is_atomic_and_backwards_time_is_rejected() {
+-    let mut d=Dispatcher::<u64,u64>::new(2,100).unwrap();
+-    let a=d.add_peer(config()).unwrap(); let b=d.add_peer(config()).unwrap();
+-    d.offer_state(a,1,1,message(1,60),0,0).unwrap();
+-    assert_eq!(d.offer_state(b,1,1,message(1,41),0,0),Err(Error::Capacity));
+-    assert_eq!(d.progress(b,&1),None);
+-    assert_eq!(d.buffered_bytes(),60);
+-    d.offer_state(a,1,2,message(2,80),0,1).unwrap();
+-    assert_eq!(d.buffered_bytes(),80);
+-    assert_eq!(d.offer_state(a,1,1,message(1,100),0,1),Ok(Offer::Stale));
+-    assert_eq!(d.offer_event(b,message(1,21),0,1),Err(Error::Capacity));
+-    assert_eq!(d.offer_event(b,message(1,1),0,0),Err(Error::ClockWentBack));
+-    assert_eq!(d.dispatch_into(0,budget(100),&mut Vec::new()),Err(Error::ClockWentBack));
++    let mut d = Dispatcher::<u64, u64>::new(2, 100).unwrap();
++    let a = d.add_peer(config()).unwrap();
++    let b = d.add_peer(config()).unwrap();
++    d.offer_state(a, 1, 1, message(1, 60), 0, 0).unwrap();
++    assert_eq!(
++        d.offer_state(b, 1, 1, message(1, 41), 0, 0),
++        Err(Error::Capacity)
++    );
++    assert_eq!(d.progress(b, &1), None);
++    assert_eq!(d.buffered_bytes(), 60);
++    d.offer_state(a, 1, 2, message(2, 80), 0, 1).unwrap();
++    assert_eq!(d.buffered_bytes(), 80);
++    assert_eq!(
++        d.offer_state(a, 1, 1, message(1, 100), 0, 1),
++        Ok(Offer::Stale)
++    );
++    assert_eq!(d.offer_event(b, message(1, 21), 0, 1), Err(Error::Capacity));
++    assert_eq!(
++        d.offer_event(b, message(1, 1), 0, 0),
++        Err(Error::ClockWentBack)
++    );
++    assert_eq!(
++        d.dispatch_into(0, budget(100), &mut Vec::new()),
++        Err(Error::ClockWentBack)
++    );
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:81:
+ fn slow_peer_cannot_consume_fast_peers_budget_and_acks_wake_pending_state() {
+-    let mut d=Dispatcher::<u64,u64>::new(2,4096).unwrap();
+-    let mut cfg=config(); cfg.limits.max_message_bytes=16; cfg.burst=16; cfg.bytes_per_tick=0;
+-    let slow=d.add_peer(cfg).unwrap(); let fast=d.add_peer(config()).unwrap();
+-    let mut out=Vec::new();
+-    for peer in [slow,fast] { d.offer_state(peer,1,1,message(1,16),0,0).unwrap(); }
+-    d.dispatch_into(0,budget(32),&mut out).unwrap();
++    let mut d = Dispatcher::<u64, u64>::new(2, 4096).unwrap();
++    let mut cfg = config();
++    cfg.limits.max_message_bytes = 16;
++    cfg.burst = 16;
++    cfg.bytes_per_tick = 0;
++    let slow = d.add_peer(cfg).unwrap();
++    let fast = d.add_peer(config()).unwrap();
++    let mut out = Vec::new();
++    for peer in [slow, fast] {
++        d.offer_state(peer, 1, 1, message(1, 16), 0, 0).unwrap();
++    }
++    d.dispatch_into(0, budget(32), &mut out).unwrap();
+     for e in out.drain(..) {
+-        d.offer_state(e.peer,1,2,message(2,16),0,1).unwrap();
+-        assert!(d.ack(e.peer,e.delivery.receipt));
++        d.offer_state(e.peer, 1, 2, message(2, 16), 0, 1).unwrap();
++        assert!(d.ack(e.peer, e.delivery.receipt));
+     }
+-    d.dispatch_into(1,budget(32),&mut out).unwrap();
+-    assert_eq!(out.len(),1); assert_eq!(out[0].peer,fast);
+-    assert_eq!(d.progress(slow,&1).unwrap().pending,Some(2));
++    d.dispatch_into(1, budget(32), &mut out).unwrap();
++    assert_eq!(out.len(), 1);
++    assert_eq!(out[0].peer, fast);
++    assert_eq!(d.progress(slow, &1).unwrap().pending, Some(2));
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/dispatcher.rs:98:
+ fn token_bucket_handles_maximum_integer_refill_without_overflow() {
+-    let mut b=TokenBucket::new(u64::MAX,u64::MAX,0).unwrap();
+-    assert!(b.consume(u64::MAX)); assert!(!b.consume(1));
+-    assert_eq!(b.available(u64::MAX).unwrap(),u64::MAX);
+-    assert_eq!(b.available(0),Err(Error::ClockWentBack));
++    let mut b = TokenBucket::new(u64::MAX, u64::MAX, 0).unwrap();
++    assert!(b.consume(u64::MAX));
++    assert!(!b.consume(1));
++    assert_eq!(b.available(u64::MAX).unwrap(), u64::MAX);
++    assert_eq!(b.available(0), Err(Error::ClockWentBack));
+ }
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:1:
+-use rill_delivery::*;
+ use rill_delivery::queue::*;
++use rill_delivery::*;
+ use std::sync::Arc;
+ 
+-fn msg(value: u64, bytes: u32) -> Message<u64> { Message::new(Arc::new(value),bytes).unwrap() }
+-fn limits() -> Limits { Limits { states: 64, events: 16, bytes: 4096, max_message_bytes: 4096 } }
++fn msg(value: u64, bytes: u32) -> Message<u64> {
++    Message::new(Arc::new(value), bytes).unwrap()
++}
++fn limits() -> Limits {
++    Limits {
++        states: 64,
++        events: 16,
++        bytes: 4096,
++        max_message_bytes: 4096,
++    }
++}
+ 
+ #[test]
+ fn coalescing_ack_retry_and_slot_reuse() {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:10:
+-    let mut m = Mailbox::<String,u64>::new(limits()).unwrap();
++    let mut m = Mailbox::<String, u64>::new(limits()).unwrap();
+     let key = "arbitrary/application/key".to_owned();
+-    m.offer_state(key.clone(),1,msg(10,10),20,0).unwrap();
+-    m.offer_state(key.clone(),2,msg(20,20),30,1).unwrap();
+-    assert_eq!(m.buffered_bytes(),20);
++    m.offer_state(key.clone(), 1, msg(10, 10), 20, 0).unwrap();
++    m.offer_state(key.clone(), 2, msg(20, 20), 30, 1).unwrap();
++    assert_eq!(m.buffered_bytes(), 20);
+     let mut out = Vec::new();
+-    m.drain_into(2,20,1,&mut out).unwrap();
+-    assert_eq!(out[0].kind,Kind::State { key: key.clone(),revision:2 });
+-    assert_eq!(m.progress(&key).unwrap().acknowledged,None);
++    m.drain_into(2, 20, 1, &mut out).unwrap();
++    assert_eq!(
++        out[0].kind,
++        Kind::State {
++            key: key.clone(),
++            revision: 2
++        }
++    );
++    assert_eq!(m.progress(&key).unwrap().acknowledged, None);
+     let old = out.remove(0).receipt;
+-    m.offer_state(key.clone(),3,msg(30,30),0,3).unwrap();
+-    assert_eq!(m.buffered_bytes(),50);
++    m.offer_state(key.clone(), 3, msg(30, 30), 0, 3).unwrap();
++    assert_eq!(m.buffered_bytes(), 50);
+     assert!(m.retry(old));
+     assert!(!m.ack(old));
+-    assert_eq!(m.buffered_bytes(),30);
+-    m.drain_into(4,30,1,&mut out).unwrap();
+-    assert_eq!(*out[0].message.payload,30);
++    assert_eq!(m.buffered_bytes(), 30);
++    m.drain_into(4, 30, 1, &mut out).unwrap();
++    assert_eq!(*out[0].message.payload, 30);
+     assert!(m.ack(out.remove(0).receipt));
+-    assert_eq!(m.progress(&key).unwrap().acknowledged,Some(3));
+-    assert_eq!(m.buffered_bytes(),0);
+-    assert_eq!(m.offer_state(key.clone(),2,msg(20,20),0,5).unwrap(),Offer::Stale);
+-    m.offer_state(key.clone(),4,msg(40,40),0,6).unwrap();
+-    m.drain_into(6,40,1,&mut out).unwrap();
++    assert_eq!(m.progress(&key).unwrap().acknowledged, Some(3));
++    assert_eq!(m.buffered_bytes(), 0);
++    assert_eq!(
++        m.offer_state(key.clone(), 2, msg(20, 20), 0, 5).unwrap(),
++        Offer::Stale
++    );
++    m.offer_state(key.clone(), 4, msg(40, 40), 0, 6).unwrap();
++    m.drain_into(6, 40, 1, &mut out).unwrap();
+     let forgotten = out.remove(0).receipt;
+     assert!(m.forget_state(&key));
+-    m.offer_state(key.clone(),1,msg(1,1),0,7).unwrap();
+-    m.drain_into(7,40,1,&mut out).unwrap();
++    m.offer_state(key.clone(), 1, msg(1, 1), 0, 7).unwrap();
++    m.drain_into(7, 40, 1, &mut out).unwrap();
+     assert!(!m.ack(forgotten));
+     assert!(m.ack(out.remove(0).receipt));
+-    assert_eq!(m.state_count(),1);
++    assert_eq!(m.state_count(), 1);
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:43:
+ fn exact_budget_skips_large_state_but_events_are_fifo() {
+-    let mut m = Mailbox::<u64,u64>::new(limits()).unwrap();
+-    m.offer_state(1,1,msg(1,100),0,0).unwrap();
+-    m.offer_state(2,1,msg(2,10),10,0).unwrap();
+-    let first = m.offer_event(msg(3,20),0,0).unwrap();
+-    let second = m.offer_event(msg(4,1),0,0).unwrap();
++    let mut m = Mailbox::<u64, u64>::new(limits()).unwrap();
++    m.offer_state(1, 1, msg(1, 100), 0, 0).unwrap();
++    m.offer_state(2, 1, msg(2, 10), 10, 0).unwrap();
++    let first = m.offer_event(msg(3, 20), 0, 0).unwrap();
++    let second = m.offer_event(msg(4, 1), 0, 0).unwrap();
+     let mut out = Vec::new();
+-    assert_eq!(m.drain_into(0,11,10,&mut out).unwrap(),10);
+-    assert_eq!(out.len(),1);
+-    assert!(matches!(out[0].kind,Kind::State {key:2,..}));
++    assert_eq!(m.drain_into(0, 11, 10, &mut out).unwrap(), 10);
++    assert_eq!(out.len(), 1);
++    assert!(matches!(out[0].kind, Kind::State { key: 2, .. }));
+     assert!(m.ack(out.remove(0).receipt));
+-    m.drain_into(0,20,10,&mut out).unwrap();
+-    assert_eq!(out[0].kind,Kind::Event { sequence:first });
++    m.drain_into(0, 20, 10, &mut out).unwrap();
++    assert_eq!(out[0].kind, Kind::Event { sequence: first });
+     let receipt = out.remove(0).receipt;
+     assert!(m.retry(receipt));
+     assert!(!m.ack(receipt));
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:59:
+-    m.drain_into(0,20,10,&mut out).unwrap();
+-    assert_eq!(out[0].kind,Kind::Event { sequence:first });
++    m.drain_into(0, 20, 10, &mut out).unwrap();
++    assert_eq!(out[0].kind, Kind::Event { sequence: first });
+     assert!(m.ack(out.remove(0).receipt));
+-    m.drain_into(0,1,10,&mut out).unwrap();
+-    assert_eq!(out[0].kind,Kind::Event { sequence:second });
++    m.drain_into(0, 1, 10, &mut out).unwrap();
++    assert_eq!(out[0].kind, Kind::Event { sequence: second });
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:67:
+ fn admission_failure_is_atomic_and_counts_inflight() {
+-    let mut m = Mailbox::<u64,u64>::new(Limits { states:1,events:1,bytes:100,max_message_bytes:100 }).unwrap();
+-    m.offer_state(1,1,msg(1,70),0,0).unwrap();
+-    let mut out = Vec::new(); m.drain_into(0,70,1,&mut out).unwrap();
+-    assert_eq!(m.offer_state(1,2,msg(2,31),0,1),Err(Error::Capacity));
+-    assert_eq!(m.progress(&1).unwrap().latest,1);
+-    assert_eq!(m.offer_state(2,1,msg(1,1),0,1),Err(Error::Capacity));
+-    m.offer_state(1,2,msg(2,30),0,1).unwrap();
+-    assert_eq!(m.buffered_bytes(),100);
+-    assert_eq!(m.offer_event(msg(3,1),0,1),Err(Error::Capacity));
++    let mut m = Mailbox::<u64, u64>::new(Limits {
++        states: 1,
++        events: 1,
++        bytes: 100,
++        max_message_bytes: 100,
++    })
++    .unwrap();
++    m.offer_state(1, 1, msg(1, 70), 0, 0).unwrap();
++    let mut out = Vec::new();
++    m.drain_into(0, 70, 1, &mut out).unwrap();
++    assert_eq!(m.offer_state(1, 2, msg(2, 31), 0, 1), Err(Error::Capacity));
++    assert_eq!(m.progress(&1).unwrap().latest, 1);
++    assert_eq!(m.offer_state(2, 1, msg(1, 1), 0, 1), Err(Error::Capacity));
++    m.offer_state(1, 2, msg(2, 30), 0, 1).unwrap();
++    assert_eq!(m.buffered_bytes(), 100);
++    assert_eq!(m.offer_event(msg(3, 1), 0, 1), Err(Error::Capacity));
+     assert!(m.ack(out.remove(0).receipt));
+-    m.offer_state(1,3,msg(3,100),0,2).unwrap();
+-    assert_eq!(m.buffered_bytes(),100);
+-    assert_eq!(m.offer_state(1,4,msg(4,1),0,1),Err(Error::ClockWentBack));
++    m.offer_state(1, 3, msg(3, 100), 0, 2).unwrap();
++    assert_eq!(m.buffered_bytes(), 100);
++    assert_eq!(
++        m.offer_state(1, 4, msg(4, 1), 0, 1),
++        Err(Error::ClockWentBack)
++    );
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:84:
+ fn foreign_receipts_and_payload_sharing() {
+-    let shared = msg(123,20);
+-    let mut a = Mailbox::<u64,u64>::new(limits()).unwrap();
+-    let mut b = Mailbox::<u64,u64>::new(limits()).unwrap();
+-    a.offer_state(1,1,shared.clone(),0,0).unwrap(); b.offer_state(1,1,shared.clone(),0,0).unwrap();
+-    let mut x = Vec::new(); let mut y = Vec::new();
+-    a.drain_into(0,20,1,&mut x).unwrap(); b.drain_into(0,20,1,&mut y).unwrap();
+-    assert!(Arc::ptr_eq(&x[0].message.payload,&y[0].message.payload));
+-    assert!(!a.ack(y[0].receipt)); assert!(!b.retry(x[0].receipt));
++    let shared = msg(123, 20);
++    let mut a = Mailbox::<u64, u64>::new(limits()).unwrap();
++    let mut b = Mailbox::<u64, u64>::new(limits()).unwrap();
++    a.offer_state(1, 1, shared.clone(), 0, 0).unwrap();
++    b.offer_state(1, 1, shared.clone(), 0, 0).unwrap();
++    let mut x = Vec::new();
++    let mut y = Vec::new();
++    a.drain_into(0, 20, 1, &mut x).unwrap();
++    b.drain_into(0, 20, 1, &mut y).unwrap();
++    assert!(Arc::ptr_eq(&x[0].message.payload, &y[0].message.payload));
++    assert!(!a.ack(y[0].receipt));
++    assert!(!b.retry(x[0].receipt));
+ }
+ 
+ #[test]
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:96:
+ fn continuous_urgent_updates_do_not_reset_old_age() {
+-    let mut m = Mailbox::<u64,u64>::new(limits()).unwrap();
+-    m.offer_state(0,0,msg(0,1),20,0).unwrap();
+-    let mut out = Vec::new(); let mut observed = false;
++    let mut m = Mailbox::<u64, u64>::new(limits()).unwrap();
++    m.offer_state(0, 0, msg(0, 1), 20, 0).unwrap();
++    let mut out = Vec::new();
++    let mut observed = false;
+     for now in 0..=40 {
+-        m.offer_state(1,now,msg(now,1),0,now).unwrap();
+-        m.offer_state(0,now+1,msg(0,1),20,now).unwrap();
+-        m.drain_into(now,1,1,&mut out).unwrap();
++        m.offer_state(1, now, msg(now, 1), 0, now).unwrap();
++        m.offer_state(0, now + 1, msg(0, 1), 20, now).unwrap();
++        m.drain_into(now, 1, 1, &mut out).unwrap();
+         for d in out.drain(..) {
+-            if let Kind::State {key:0,..} = d.kind { observed = true; }
++            if let Kind::State { key: 0, .. } = d.kind {
++                observed = true;
++            }
+             assert!(m.ack(d.receipt));
+         }
+-        if observed { break; }
++        if observed {
++            break;
++        }
+     }
+     assert!(observed);
+ }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/mailbox.rs:113:
+ fn randomized_equivalence<Q: ReadyQueue>() {
+     // ScanQueue is separately proven against BTreeMap, then used as a delivery
+     // differential oracle across arbitrary scheduling structures and lifecycle churn.
+-    let mut a = Mailbox::<u64,u64,Q>::new(limits()).unwrap();
+-    let mut b = Mailbox::<u64,u64,ScanQueue>::new(limits()).unwrap();
++    let mut a = Mailbox::<u64, u64, Q>::new(limits()).unwrap();
++    let mut b = Mailbox::<u64, u64, ScanQueue>::new(limits()).unwrap();
+     let mut random = 412349123u64;
+-    let mut next = || { random ^= random << 13; random ^= random >> 7; random ^= random << 17; random };
++    let mut next = || {
++        random ^= random << 13;
++        random ^= random >> 7;
++        random ^= random << 17;
++        random
++    };
+     let mut receipts = Vec::new();
+-    let mut x = Vec::new(); let mut y = Vec::new();
++    let mut x = Vec::new();
++    let mut y = Vec::new();
+     for now in 0..20000 {
+-        let n = next(); let key = (n >> 8) % 80;
++        let n = next();
++        let key = (n >> 8) % 80;
+         match n % 8 {
+             0..=2 => {
+-                let rev = next() % (now + 1); let bytes = (next() % 300 + 1) as u32; let priority = (next() % 25) as u16;
+-                assert_eq!(a.offer_state(key,rev,msg(n,bytes),priority,now),b.offer_state(key,rev,msg(n,bytes),priority,now));
++                let rev = next() % (now + 1);
++                let bytes = (next() % 300 + 1) as u32;
++                let priority = (next() % 25) as u16;
++                assert_eq!(
++                    a.offer_state(key, rev, msg(n, bytes), priority, now),
++                    b.offer_state(key, rev, msg(n, bytes), priority, now)
++                );
+             }
+-            3 => { assert_eq!(a.forget_state(&key),b.forget_state(&key)); }
++            3 => {
++                assert_eq!(a.forget_state(&key), b.forget_state(&key));
++            }
+             4 => {
+                 let bytes = (next() % 200 + 1) as u32;
+-                assert_eq!(a.offer_event(msg(n,bytes),0,now),b.offer_event(msg(n,bytes),0,now));
++                assert_eq!(
++                    a.offer_event(msg(n, bytes), 0, now),
++                    b.offer_event(msg(n, bytes), 0, now)
++                );
+             }
+             5 => {
+-                let budget = next() % 1000; let count = (next() % 20) as usize;
+-                assert_eq!(a.drain_into(now,budget,count,&mut x),b.drain_into(now,budget,count,&mut y));
+-                assert_eq!(x.len(),y.len());
+-                for (dx,dy) in x.drain(..).zip(y.drain(..)) {
+-                    assert_eq!(dx.kind,dy.kind); assert_eq!(dx.queued_at,dy.queued_at);
+-                    assert_eq!(*dx.message.payload,*dy.message.payload);
+-                    receipts.push((dx.receipt,dy.receipt));
++                let budget = next() % 1000;
++                let count = (next() % 20) as usize;
++                assert_eq!(
++                    a.drain_into(now, budget, count, &mut x),
++                    b.drain_into(now, budget, count, &mut y)
++                );
++                assert_eq!(x.len(), y.len());
++                for (dx, dy) in x.drain(..).zip(y.drain(..)) {
++                    assert_eq!(dx.kind, dy.kind);
++                    assert_eq!(dx.queued_at, dy.queued_at);
++                    assert_eq!(*dx.message.payload, *dy.message.payload);
++                    receipts.push((dx.receipt, dy.receipt));
+                 }
+             }
+-            _ => if !receipts.is_empty() {
+-                let i = next() as usize % receipts.len(); let (ra,rb) = receipts[i];
+-                if n & 8 == 0 { assert_eq!(a.ack(ra),b.ack(rb)); }
+-                else { assert_eq!(a.retry(ra),b.retry(rb)); }
+-                if n & 16 == 0 { receipts.swap_remove(i); }
++            _ => {
++                if !receipts.is_empty() {
++                    let i = next() as usize % receipts.len();
++                    let (ra, rb) = receipts[i];
++                    if n & 8 == 0 {
++                        assert_eq!(a.ack(ra), b.ack(rb));
++                    } else {
++                        assert_eq!(a.retry(ra), b.retry(rb));
++                    }
++                    if n & 16 == 0 {
++                        receipts.swap_remove(i);
++                    }
++                }
+             }
+         }
+-        assert_eq!(a.buffered_bytes(),b.buffered_bytes()); assert!(a.buffered_bytes() <= limits().bytes);
+-        assert_eq!(a.event_count(),b.event_count()); assert_eq!(a.state_count(),b.state_count());
+-        for key in 0..80 { assert_eq!(a.progress(&key),b.progress(&key)); }
++        assert_eq!(a.buffered_bytes(), b.buffered_bytes());
++        assert!(a.buffered_bytes() <= limits().bytes);
++        assert_eq!(a.event_count(), b.event_count());
++        assert_eq!(a.state_count(), b.state_count());
++        for key in 0..80 {
++            assert_eq!(a.progress(&key), b.progress(&key));
++        }
+     }
+ }
+-#[test] fn randomized_indexed() { randomized_equivalence::<IndexedHeap<4>>(); }
+-#[test] fn randomized_hybrid() { randomized_equivalence::<Hybrid<16>>(); }
+-#[test] fn randomized_sorted() { randomized_equivalence::<SortedQueue>(); }
+-#[test] fn randomized_lazy() { randomized_equivalence::<LazyHeap>(); }
+-#[cfg(feature="comparisons")]
+-#[test] fn randomized_external() { randomized_equivalence::<external::Priority>(); randomized_equivalence::<external::OrxIndex<4>>(); }
++#[test]
++fn randomized_indexed() {
++    randomized_equivalence::<IndexedHeap<4>>();
++}
++#[test]
++fn randomized_hybrid() {
++    randomized_equivalence::<Hybrid<16>>();
++}
++#[test]
++fn randomized_sorted() {
++    randomized_equivalence::<SortedQueue>();
++}
++#[test]
++fn randomized_lazy() {
++    randomized_equivalence::<LazyHeap>();
++}
++#[cfg(feature = "comparisons")]
++#[test]
++fn randomized_external() {
++    randomized_equivalence::<external::Priority>();
++    randomized_equivalence::<external::OrxIndex<4>>();
++}
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/model.rs:1:
+ //! Independent declarative delivery oracle: no production queues, counters,
+ //! indexes, slot recycling or Mailbox methods are used to derive expected state.
+-use rill_delivery::*;
+ use rill_delivery::queue::*;
+-use std::collections::{BTreeMap,VecDeque};
++use rill_delivery::*;
++use std::collections::{BTreeMap, VecDeque};
+ use std::sync::Arc;
+ 
+-#[derive(Clone,Debug,Eq,PartialEq)]
+-struct Datum {revision:u64,payload:u64,bytes:u32,due:u64,order:u64,age:u64}
++#[derive(Clone, Debug, Eq, PartialEq)]
++struct Datum {
++    revision: u64,
++    payload: u64,
++    bytes: u32,
++    due: u64,
++    order: u64,
++    age: u64,
++}
+ #[derive(Default)]
+-struct Record {latest:u64,acked:Option<u64>,pending:Option<Datum>,flight:Option<(u64,Datum)>}
++struct Record {
++    latest: u64,
++    acked: Option<u64>,
++    pending: Option<Datum>,
++    flight: Option<(u64, Datum)>,
++}
+ #[derive(Default)]
+-struct Model {records:BTreeMap<u64,Record>,events:VecDeque<(Datum,Option<u64>)>,serial:u64}
++struct Model {
++    records: BTreeMap<u64, Record>,
++    events: VecDeque<(Datum, Option<u64>)>,
++    serial: u64,
++}
+ impl Model {
+-    fn bytes(&self)->u64 {
+-        self.records.values().map(|r|r.pending.as_ref().map_or(0,|v|u64::from(v.bytes))+
+-            r.flight.as_ref().map_or(0,|(_,v)|u64::from(v.bytes))).sum::<u64>()+
+-            self.events.iter().map(|(v,_)|u64::from(v.bytes)).sum::<u64>()
++    fn bytes(&self) -> u64 {
++        self.records
++            .values()
++            .map(|r| {
++                r.pending.as_ref().map_or(0, |v| u64::from(v.bytes))
++                    + r.flight.as_ref().map_or(0, |(_, v)| u64::from(v.bytes))
++            })
++            .sum::<u64>()
++            + self
++                .events
++                .iter()
++                .map(|(v, _)| u64::from(v.bytes))
++                .sum::<u64>()
+     }
+-    fn offer(&mut self,key:u64,revision:u64,payload:u64,bytes:u32,delay:u16,now:u64)->Result<Offer,Error> {
+-        if self.records.get(&key).is_some_and(|r|revision<=r.latest) {return Ok(Offer::Stale);}
+-        if !self.records.contains_key(&key) && self.records.len()==7 {return Err(Error::Capacity);}
+-        let pending=self.records.get(&key).and_then(|r|r.pending.as_ref());
+-        if self.bytes()-pending.map_or(0,|v|u64::from(v.bytes))+u64::from(bytes)>150 {return Err(Error::Capacity);}
+-        self.serial+=1;
+-        let (due,order,age,outcome)=if let Some(old)=pending {
+-            let rank=(old.due,old.order).min((now+u64::from(delay),self.serial));
+-            (rank.0,rank.1,old.age,Offer::Replaced)
+-        } else {(now+u64::from(delay),self.serial,now,Offer::Inserted)};
+-        let r=self.records.entry(key).or_default();r.latest=revision;
+-        r.pending=Some(Datum {revision,payload,bytes,due,order,age});
++    fn offer(
++        &mut self,
++        key: u64,
++        revision: u64,
++        payload: u64,
++        bytes: u32,
++        delay: u16,
++        now: u64,
++    ) -> Result<Offer, Error> {
++        if self.records.get(&key).is_some_and(|r| revision <= r.latest) {
++            return Ok(Offer::Stale);
++        }
++        if !self.records.contains_key(&key) && self.records.len() == 7 {
++            return Err(Error::Capacity);
++        }
++        let pending = self.records.get(&key).and_then(|r| r.pending.as_ref());
++        if self.bytes() - pending.map_or(0, |v| u64::from(v.bytes)) + u64::from(bytes) > 150 {
++            return Err(Error::Capacity);
++        }
++        self.serial += 1;
++        let (due, order, age, outcome) = if let Some(old) = pending {
++            let rank = (old.due, old.order).min((now + u64::from(delay), self.serial));
++            (rank.0, rank.1, old.age, Offer::Replaced)
++        } else {
++            (now + u64::from(delay), self.serial, now, Offer::Inserted)
++        };
++        let r = self.records.entry(key).or_default();
++        r.latest = revision;
++        r.pending = Some(Datum {
++            revision,
++            payload,
++            bytes,
++            due,
++            order,
++            age,
++        });
+         Ok(outcome)
+     }
+-    fn event(&mut self,payload:u64,bytes:u32,delay:u16,now:u64)->Result<u64,Error> {
+-        if self.events.len()==4 || self.bytes()+u64::from(bytes)>150 {return Err(Error::Capacity);}
+-        self.serial+=1;
+-        self.events.push_back((Datum {revision:self.serial,payload,bytes,due:now+u64::from(delay),order:self.serial,age:now},None));
++    fn event(&mut self, payload: u64, bytes: u32, delay: u16, now: u64) -> Result<u64, Error> {
++        if self.events.len() == 4 || self.bytes() + u64::from(bytes) > 150 {
++            return Err(Error::Capacity);
++        }
++        self.serial += 1;
++        self.events.push_back((
++            Datum {
++                revision: self.serial,
++                payload,
++                bytes,
++                due: now + u64::from(delay),
++                order: self.serial,
++                age: now,
++            },
++            None,
++        ));
+         Ok(self.serial)
+     }
+-    fn drain(&mut self,mut budget:u64,count:usize)->Vec<(Kind<u64>,Datum,u64)> {
+-        let mut out=Vec::new();
++    fn drain(&mut self, mut budget: u64, count: usize) -> Vec<(Kind<u64>, Datum, u64)> {
++        let mut out = Vec::new();
+         for _ in 0..count {
+             // Recompute the set of fitting candidates from the logical contents.
+-            let state=self.records.iter().filter(|(_,r)|r.flight.is_none())
+-                .filter_map(|(&k,r)|r.pending.as_ref().filter(|v|u64::from(v.bytes)<=budget).map(|v|(k,v.clone())))
+-                .min_by_key(|(_,v)|(v.due,v.order));
+-            let event=self.events.front().filter(|(v,f)|f.is_none() && u64::from(v.bytes)<=budget).map(|(v,_)|v.clone());
+-            let event_first=event.as_ref().is_some_and(|e|state.as_ref().is_none_or(|(_,s)|(e.due,e.order)<(s.due,s.order)));
+-            let (kind,value)=if event_first {
+-                let v=event.unwrap();(Kind::Event {sequence:v.revision},v)
+-            } else if let Some((key,value))=state {(Kind::State {key,revision:value.revision},value)}
+-            else {break};
+-            self.serial+=1; let token=self.serial;
++            let state = self
++                .records
++                .iter()
++                .filter(|(_, r)| r.flight.is_none())
++                .filter_map(|(&k, r)| {
++                    r.pending
++                        .as_ref()
++                        .filter(|v| u64::from(v.bytes) <= budget)
++                        .map(|v| (k, v.clone()))
++                })
++                .min_by_key(|(_, v)| (v.due, v.order));
++            let event = self
++                .events
++                .front()
++                .filter(|(v, f)| f.is_none() && u64::from(v.bytes) <= budget)
++                .map(|(v, _)| v.clone());
++            let event_first = event.as_ref().is_some_and(|e| {
++                state
++                    .as_ref()
++                    .is_none_or(|(_, s)| (e.due, e.order) < (s.due, s.order))
++            });
++            let (kind, value) = if event_first {
++                let v = event.unwrap();
++                (
++                    Kind::Event {
++                        sequence: v.revision,
++                    },
++                    v,
++                )
++            } else if let Some((key, value)) = state {
++                (
++                    Kind::State {
++                        key,
++                        revision: value.revision,
++                    },
++                    value,
++                )
++            } else {
++                break;
++            };
++            self.serial += 1;
++            let token = self.serial;
+             match kind {
+-                Kind::Event {..}=>self.events.front_mut().unwrap().1=Some(token),
+-                Kind::State {key,..}=>{
+-                    let r=self.records.get_mut(&key).unwrap();r.pending=None;r.flight=Some((token,value.clone()));
++                Kind::Event { .. } => self.events.front_mut().unwrap().1 = Some(token),
++                Kind::State { key, .. } => {
++                    let r = self.records.get_mut(&key).unwrap();
++                    r.pending = None;
++                    r.flight = Some((token, value.clone()));
+                 }
+             }
+-            budget-=u64::from(value.bytes);out.push((kind,value,token));
++            budget -= u64::from(value.bytes);
++            out.push((kind, value, token));
+         }
+         out
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/model.rs:64:
+-    fn settle(&mut self,token:u64,retry:bool)->bool {
+-        if self.events.front().is_some_and(|(_,f)|*f==Some(token)) {
+-            if retry {self.events.front_mut().unwrap().1=None;} else {self.events.pop_front();}
++    fn settle(&mut self, token: u64, retry: bool) -> bool {
++        if self.events.front().is_some_and(|(_, f)| *f == Some(token)) {
++            if retry {
++                self.events.front_mut().unwrap().1 = None;
++            } else {
++                self.events.pop_front();
++            }
+             return true;
+         }
+         for r in self.records.values_mut() {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/model.rs:70:
+-            if r.flight.as_ref().is_some_and(|(f,_)|*f==token) {
+-                let (_,old)=r.flight.take().unwrap();
++            if r.flight.as_ref().is_some_and(|(f, _)| *f == token) {
++                let (_, old) = r.flight.take().unwrap();
+                 if retry {
+-                    if let Some(p)=&mut r.pending {
+-                        (p.due,p.order)=(p.due,p.order).min((old.due,old.order));p.age=p.age.min(old.age);
+-                    } else {r.pending=Some(old);}
+-                } else {r.acked=Some(old.revision);}
++                    if let Some(p) = &mut r.pending {
++                        (p.due, p.order) = (p.due, p.order).min((old.due, old.order));
++                        p.age = p.age.min(old.age);
++                    } else {
++                        r.pending = Some(old);
++                    }
++                } else {
++                    r.acked = Some(old.revision);
++                }
+                 return true;
+             }
+         }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/model.rs:81:
+     }
+ }
+ 
+-fn prove<Q:ReadyQueue>(seed:u64) {
+-    let limits=Limits {states:7,events:4,bytes:150,max_message_bytes:150};
+-    let mut actual=Mailbox::<u64,u64,Q>::new(limits).unwrap();let mut model=Model::default();
+-    let mut rng=seed;let mut random=||{rng^=rng<<13;rng^=rng>>7;rng^=rng<<17;rng};
+-    let mut receipts=Vec::new();let mut out=Vec::new();
++fn prove<Q: ReadyQueue>(seed: u64) {
++    let limits = Limits {
++        states: 7,
++        events: 4,
++        bytes: 150,
++        max_message_bytes: 150,
++    };
++    let mut actual = Mailbox::<u64, u64, Q>::new(limits).unwrap();
++    let mut model = Model::default();
++    let mut rng = seed;
++    let mut random = || {
++        rng ^= rng << 13;
++        rng ^= rng >> 7;
++        rng ^= rng << 17;
++        rng
++    };
++    let mut receipts = Vec::new();
++    let mut out = Vec::new();
+     for now in 0..30000 {
+-        let n=random();let key=(n>>8)%10;
+-        match n%9 {
+-            0..=3=>{
+-                let rev=random()%(now+1);let cost=(random()%40+1) as u32;let delay=(random()%20) as u16;
+-                let message=Message::new(Arc::new(n),cost).unwrap();
+-                assert_eq!(actual.offer_state(key,rev,message,delay,now),model.offer(key,rev,n,cost,delay,now));
++        let n = random();
++        let key = (n >> 8) % 10;
++        match n % 9 {
++            0..=3 => {
++                let rev = random() % (now + 1);
++                let cost = (random() % 40 + 1) as u32;
++                let delay = (random() % 20) as u16;
++                let message = Message::new(Arc::new(n), cost).unwrap();
++                assert_eq!(
++                    actual.offer_state(key, rev, message, delay, now),
++                    model.offer(key, rev, n, cost, delay, now)
++                );
+             }
+-            4=>{
+-                let cost=(random()%40+1) as u32;let delay=(random()%20) as u16;
+-                assert_eq!(actual.offer_event(Message::new(Arc::new(n),cost).unwrap(),delay,now),model.event(n,cost,delay,now));
++            4 => {
++                let cost = (random() % 40 + 1) as u32;
++                let delay = (random() % 20) as u16;
++                assert_eq!(
++                    actual.offer_event(Message::new(Arc::new(n), cost).unwrap(), delay, now),
++                    model.event(n, cost, delay, now)
++                );
+             }
+-            5=>{assert_eq!(actual.forget_state(&key),model.records.remove(&key).is_some());}
+-            6=>{
+-                let budget=random()%160;let count=(random()%10) as usize;
+-                let expected=model.drain(budget,count);
+-                let used=actual.drain_into(now,budget,count,&mut out).unwrap();
+-                assert_eq!(used,expected.iter().map(|(_,v,_)|u64::from(v.bytes)).sum::<u64>());
+-                assert_eq!(out.len(),expected.len());
+-                for (d,(kind,v,token)) in out.drain(..).zip(expected) {
+-                    assert_eq!(d.kind,kind);assert_eq!(*d.message.payload,v.payload);
+-                    assert_eq!(d.message.bytes(),v.bytes);assert_eq!(d.queued_at,v.age);
+-                    receipts.push((d.receipt,token));
++            5 => {
++                assert_eq!(
++                    actual.forget_state(&key),
++                    model.records.remove(&key).is_some()
++                );
++            }
++            6 => {
++                let budget = random() % 160;
++                let count = (random() % 10) as usize;
++                let expected = model.drain(budget, count);
++                let used = actual.drain_into(now, budget, count, &mut out).unwrap();
++                assert_eq!(
++                    used,
++                    expected
++                        .iter()
++                        .map(|(_, v, _)| u64::from(v.bytes))
++                        .sum::<u64>()
++                );
++                assert_eq!(out.len(), expected.len());
++                for (d, (kind, v, token)) in out.drain(..).zip(expected) {
++                    assert_eq!(d.kind, kind);
++                    assert_eq!(*d.message.payload, v.payload);
++                    assert_eq!(d.message.bytes(), v.bytes);
++                    assert_eq!(d.queued_at, v.age);
++                    receipts.push((d.receipt, token));
+                 }
+             }
+-            _=>if !receipts.is_empty() {
+-                let i=random() as usize%receipts.len();let (receipt,token)=receipts[i];let retry=n&16!=0;
+-                assert_eq!(if retry {actual.retry(receipt)} else {actual.ack(receipt)},model.settle(token,retry));
+-                if n&32==0 {receipts.swap_remove(i);}
++            _ => {
++                if !receipts.is_empty() {
++                    let i = random() as usize % receipts.len();
++                    let (receipt, token) = receipts[i];
++                    let retry = n & 16 != 0;
++                    assert_eq!(
++                        if retry {
++                            actual.retry(receipt)
++                        } else {
++                            actual.ack(receipt)
++                        },
++                        model.settle(token, retry)
++                    );
++                    if n & 32 == 0 {
++                        receipts.swap_remove(i);
++                    }
++                }
+             }
+         }
+-        assert_eq!(actual.buffered_bytes(),model.bytes(),"seed={seed} step={now}");
+-        assert_eq!(actual.state_count(),model.records.len());assert_eq!(actual.event_count(),model.events.len());
++        assert_eq!(
++            actual.buffered_bytes(),
++            model.bytes(),
++            "seed={seed} step={now}"
++        );
++        assert_eq!(actual.state_count(), model.records.len());
++        assert_eq!(actual.event_count(), model.events.len());
+         for k in 0..10 {
+-            assert_eq!(actual.progress(&k),model.records.get(&k).map(|r|Progress {latest:r.latest,acknowledged:r.acked,
+-                pending:r.pending.as_ref().map(|v|v.revision),in_flight:r.flight.as_ref().map(|(_,v)|v.revision)}));
++            assert_eq!(
++                actual.progress(&k),
++                model.records.get(&k).map(|r| Progress {
++                    latest: r.latest,
++                    acknowledged: r.acked,
++                    pending: r.pending.as_ref().map(|v| v.revision),
++                    in_flight: r.flight.as_ref().map(|(_, v)| v.revision)
++                })
++            );
+         }
+     }
+ }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/model.rs:128:
+-#[test] fn independent_model_heap() {for seed in [19,71923,982451653] {prove::<IndexedHeap<4>>(seed);}}
+-#[test] fn independent_model_adaptive() {for seed in [31,61937,961748941] {prove::<AdaptiveQueue<8>>(seed);}}
++#[test]
++fn independent_model_heap() {
++    for seed in [19, 71923, 982451653] {
++        prove::<IndexedHeap<4>>(seed);
++    }
++}
++#[test]
++fn independent_model_adaptive() {
++    for seed in [31, 61937, 961748941] {
++        prove::<AdaptiveQueue<8>>(seed);
++    }
++}
+ 
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:4:
+ fn check<Q: ReadyQueue>() {
+     for seed in 1..=24 {
+         let mut random = seed * 81239;
+-        let mut next = || { random ^= random << 13; random ^= random >> 7; random ^= random << 17; random };
++        let mut next = || {
++            random ^= random << 13;
++            random ^= random >> 7;
++            random ^= random << 17;
++            random
++        };
+         let mut q = Q::default();
+         let mut model = BTreeMap::new();
+         for _ in 0..12000 {
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:11:
+             let n = next();
+             let id = (n as usize >> 3) % 257;
+             match n % 5 {
+-                0 => { q.remove(id); model.remove(&id); }
++                0 => {
++                    q.remove(id);
++                    model.remove(&id);
++                }
+                 1 => {
+                     let expected = model.values().min().copied();
+                     assert_eq!(q.pop(), expected);
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:18:
+-                    if let Some(e) = expected { model.remove(&e.id); }
++                    if let Some(e) = expected {
++                        model.remove(&e.id);
++                    }
+                 }
+                 _ => {
+                     // Intentionally tie both rank fields; id is the final tie break.
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:22:
+-                    let e = Entry { id, rank: Rank { due: next() % 41, order: next() % 17 } };
+-                    q.upsert(e); model.insert(id,e);
++                    let e = Entry {
++                        id,
++                        rank: Rank {
++                            due: next() % 41,
++                            order: next() % 17,
++                        },
++                    };
++                    q.upsert(e);
++                    model.insert(id, e);
+                 }
+             }
+             assert_eq!(q.peek(), model.values().min().copied());
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:27:
+-            assert_eq!(q.len(),model.len());
++            assert_eq!(q.len(), model.len());
+         }
+         while let Some(e) = q.pop() {
+-            assert_eq!(Some(e), model.values().min().copied()); model.remove(&e.id);
++            assert_eq!(Some(e), model.values().min().copied());
++            model.remove(&e.id);
+         }
+         assert!(model.is_empty());
+     }
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:34:
+ }
+-macro_rules! prove { ($name:ident,$q:ty) => { #[test] fn $name() { check::<$q>(); } }; }
++macro_rules! prove {
++    ($name:ident,$q:ty) => {
++        #[test]
++        fn $name() {
++            check::<$q>();
++        }
++    };
++}
+ prove!(scan, ScanQueue);
+-prove!(cached_scan,CachedScan);
+-prove!(tournament,Tournament);
+-prove!(adaptive4,AdaptiveQueue<4>);
+-prove!(adaptive8,AdaptiveQueue<8>);
+-prove!(adaptive16,AdaptiveQueue<16>);
+-prove!(adaptive32,AdaptiveQueue<32>);
+-prove!(cached_hybrid4,CachedHybrid<4>);
+-prove!(cached_hybrid8,CachedHybrid<8>);
+-prove!(cached_hybrid16,CachedHybrid<16>);
+-prove!(cached_hybrid32,CachedHybrid<32>);
+-prove!(cached_hybrid64,CachedHybrid<64>);
++prove!(cached_scan, CachedScan);
++prove!(tournament, Tournament);
++prove!(adaptive4, AdaptiveQueue<4>);
++prove!(adaptive8, AdaptiveQueue<8>);
++prove!(adaptive16, AdaptiveQueue<16>);
++prove!(adaptive32, AdaptiveQueue<32>);
++prove!(cached_hybrid4, CachedHybrid<4>);
++prove!(cached_hybrid8, CachedHybrid<8>);
++prove!(cached_hybrid16, CachedHybrid<16>);
++prove!(cached_hybrid32, CachedHybrid<32>);
++prove!(cached_hybrid64, CachedHybrid<64>);
+ prove!(sorted, SortedQueue);
+ prove!(tree, TreeQueue);
+ prove!(lazy, LazyHeap);
+Diff in /Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/tests/queues.rs:57:
+ prove!(hybrid16, Hybrid<16>);
+ prove!(hybrid32, Hybrid<32>);
+ prove!(hybrid64, Hybrid<64>);
+-#[cfg(feature="comparisons")]
++#[cfg(feature = "comparisons")]
+ mod comparisons {
+     use super::*;
+     use rill_delivery::queue::external::*;

@@ -1,0 +1,122 @@
+completed 21/384
+completed 42/384
+completed 63/384
+completed 84/384
+completed 105/384
+completed 126/384
+completed 147/384
+completed 168/384
+completed 189/384
+completed 210/384
+completed 231/384
+completed 252/384
+completed 273/384
+completed 294/384
+completed 315/384
+completed 336/384
+completed 357/384
+completed 378/384
+{
+  "fanout": [
+    {
+      "backend": "heap4",
+      "median_ms": 148.000875,
+      "runs": 2
+    },
+    {
+      "backend": "adaptive16",
+      "median_ms": 148.4931455,
+      "runs": 2
+    },
+    {
+      "backend": "adaptive32",
+      "median_ms": 151.883125,
+      "runs": 2
+    }
+  ],
+  "resident": [
+    {
+      "backend": "cached4",
+      "median_ms": 770.6202085,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 809.932375,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 812.350854,
+      "runs": 2
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "sorted",
+      "median_ms": 417.8868125,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 426.0111255,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 436.188479,
+      "runs": 2
+    }
+  ],
+  "slow": [
+    {
+      "backend": "heap8",
+      "median_ms": 532.9525415,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid32",
+      "median_ms": 544.8555625,
+      "runs": 2
+    },
+    {
+      "backend": "cached-scan",
+      "median_ms": 550.746646,
+      "runs": 2
+    }
+  ],
+  "loss": [
+    {
+      "backend": "lazy",
+      "median_ms": 527.4990625,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid4",
+      "median_ms": 528.9310415,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid16",
+      "median_ms": 529.1421665,
+      "runs": 2
+    }
+  ],
+  "events": [
+    {
+      "backend": "heap8",
+      "median_ms": 261.553021,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid8",
+      "median_ms": 273.040646,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 275.559271,
+      "runs": 2
+    }
+  ]
+}

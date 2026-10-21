@@ -1,0 +1,93 @@
+   Compiling libc v0.2.191
+   Compiling rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
+   Compiling cpu-time v1.0.0
+    Finished `test` profile [unoptimized] target(s) in 2.15s
+     Running unittests src/lib.rs (build/msrv-target/debug/deps/rill_delivery-c3deffa119a666e5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/dispatcher.rs (build/msrv-target/debug/deps/dispatcher-52f925b50d224f73)
+
+running 7 tests
+test global_capacity_is_atomic_and_backwards_time_is_rejected ... ok
+test removal_unlinks_active_peers_and_reconnect_rejects_old_handles ... ok
+test prepared_global_admission_and_reconnect_are_atomic ... ok
+test slow_peer_cannot_consume_fast_peers_budget_and_acks_wake_pending_state ... ok
+test token_bucket_handles_maximum_integer_refill_without_overflow ... ok
+test byte_credit_weights_and_rotation_avoid_starvation ... ok
+test twenty_thousand_recipients_converge_with_exact_limits ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/mailbox.rs (build/msrv-target/debug/deps/mailbox-6383e7b1875c7c48)
+
+running 13 tests
+test admission_failure_is_atomic_and_counts_inflight ... ok
+test blocked_budget_then_small_state_retry_and_event_ack_resume ... ok
+test exact_budget_skips_large_state_but_events_are_fifo ... ok
+test foreign_receipts_and_payload_sharing ... ok
+test prepared_streams_survive_updates_but_not_forgetting_or_foreign_mailboxes ... ok
+test continuous_urgent_updates_do_not_reset_old_age ... ok
+test coalescing_ack_retry_and_slot_reuse ... ok
+test timestamp_overflow_and_zero_work_are_atomic ... ok
+test unsized_payloads_and_small_budget_then_replacement ... ok
+test randomized_lazy ... ok
+test randomized_sorted ... ok
+test randomized_indexed ... ok
+test randomized_hybrid ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+     Running tests/model.rs (build/msrv-target/debug/deps/model-a24a0ac9325f74d4)
+
+running 3 tests
+test independent_model_heap ... ok
+test independent_model_adaptive ... ok
+test independent_model_switching ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running tests/queues.rs (build/msrv-target/debug/deps/queues-8a7c6fced206e595)
+
+running 29 tests
+test adaptive32 ... ok
+test adaptive8 ... ok
+test cached_hybrid16 ... ok
+test cached_hybrid4 ... ok
+test adaptive16 ... ok
+test cached_hybrid32 ... ok
+test adaptive4 ... ok
+test cached_hybrid64 ... ok
+test cached_hybrid8 ... ok
+test cached_scan ... ok
+test hybrid32 ... ok
+test hybrid4 ... ok
+test hybrid8 ... ok
+test hybrid64 ... ok
+test hybrid16 ... ok
+test indexed16 ... ok
+test lazy ... ok
+test indexed2 ... ok
+test indexed8 ... ok
+test indexed4 ... ok
+test switch0_8 ... ok
+test switch16_64 ... ok
+test scan ... ok
+test switch4_16 ... ok
+test switch4_32 ... ok
+test switch8_32 ... ok
+test tournament ... ok
+test tree ... ok
+test sorted ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.17s
+
+   Doc-tests rill_delivery
+
+running 1 test
+test src/lib.rs - (line 30) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+

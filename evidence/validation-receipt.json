@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "source_sha256": {
+    "Cargo.toml": "45e6ab3bde234be14989174bbef05d85fbce40cb2ed1570613e44745bafff206",
+    "Cargo.lock": "a84424e9dc9e81be9b2c4f2c94c8f089075b320acbb78217fb45d9911672dadd",
+    "README.md": "e4c0e1f147e57e6759813bafd3e8e1f52e8174572ab7dc17fb315fad098ab2b1",
+    "src/budget.rs": "18cda27a47fdfdf7d3381d0e770675d92892936ce7ac77b1314d4fa0b23fbeac",
+    "src/dispatcher.rs": "0af68ff7345bb29348e093e70b6ebea6d682898d8f20e6cbd13a8101eee6ea6e",
+    "src/lib.rs": "6eb2c068e05bf09486e4e96bea3726a48e20d10c15208ea57e617dd4ffe40a01",
+    "src/mailbox.rs": "19f744d1d08b1cea5f685b6190af79f2596d9557f62a1c3846c57cf267538373",
+    "src/queue.rs": "7e8b4177ddeda143b99a19a448012d04ad47a6c6ee8b9425231e64fca0c793e0",
+    "tests/dispatcher.rs": "86642baf3f5a87bc1f4ecf2546b2dd1a116d5c7012de3941b86158529cc593c1",
+    "tests/mailbox.rs": "6db145924b4f88a585a2bce895cc9e3e73ec1f4ced90f421cb41940e52e1eee3",
+    "tests/model.rs": "5ea3b3373897bdd4d7f651ff47a27c3e5da0dd4f5a9e5c3554d7a13249b92662",
+    "tests/queues.rs": "595f11795c3e1810cdd76a9469569cfa32f6f34cd8b0dd2a2aa6c26164a632d0",
+    "examples/shards.rs": "3ab574db7f2af6db2cd83063755195282de552b832506197128aad8827808db9"
+  },
+  "checks": [
+    {
+      "name": "tests-release",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--release"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-tests-release.log",
+      "log_sha256": "ad72b7ceb37198f1ad910ec636a6c389f7390fa9440a0d55e2c694ca05f1fb96"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-clippy.log",
+      "log_sha256": "7b5b7d61ee0b46275cfaab21c7013a371f927ae674a78df88add3fa9c506f15e"
+    },
+    {
+      "name": "format",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-format.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "msrv",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "+1.85.0",
+        "test",
+        "--locked",
+        "--no-default-features"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-msrv.log",
+      "log_sha256": "ef220da15a056dcf06f6083027e9abc457ba8b5b53fbe89e2ba7350ee23170c8"
+    },
+    {
+      "name": "example",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "run",
+        "--locked",
+        "--release",
+        "--example",
+        "shards"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-example.log",
+      "log_sha256": "34b0e5ba6533e948c0dd18d26c68dc10d3779936f3a30814bd1c5bf69acb79fe"
+    },
+    {
+      "name": "normal-dependencies",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "tree",
+        "--locked",
+        "--no-default-features",
+        "--edges",
+        "normal"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-normal-dependencies.log",
+      "log_sha256": "ff7db47938b17abab3a64602074453e84a6afb67988a65e7a6c85f1c30456739"
+    },
+    {
+      "name": "package",
+      "command": [
+        "/Users/james/.cargo/bin/cargo",
+        "package",
+        "--locked",
+        "--allow-dirty"
+      ],
+      "exit_code": 0,
+      "log": "evidence/final-package.log",
+      "log_sha256": "72ea23c4542aeaf4782ded69718d584eb2df1c6455852cbc17a254fb2576f8a3"
+    }
+  ],
+  "all_passed": true
+}

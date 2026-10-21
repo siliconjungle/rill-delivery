@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "source_commit": "41ff0ea5b6286ef388649c5c50d3cecee4b79c37",
+  "source_sha256": {
+    "Cargo.toml": "3455f7de6f9b2bebfc4bc56987737fa246f56d53e2015fe695ad2a4bdceb8f9e",
+    "Cargo.lock": "bb105fca2b9a4ae6a6784ed65a25022911ffe75bcd10ca99117c64b388741466",
+    "src/budget.rs": "18cda27a47fdfdf7d3381d0e770675d92892936ce7ac77b1314d4fa0b23fbeac",
+    "src/dispatcher.rs": "b25939946e9acf67ad78c95cd82035c8f3a4e83a4903eb51a055b954098585e8",
+    "src/lib.rs": "6eb2c068e05bf09486e4e96bea3726a48e20d10c15208ea57e617dd4ffe40a01",
+    "src/mailbox.rs": "9e58034462337efdb715ebc1bf058b808de082d75ebe433cf0aafeb497fb3213",
+    "src/queue.rs": "8ac0755bab9dcaf68290cdae261761795024a09459b0537a66c4d32d1c2a2977",
+    "benches/delivery.rs": "e42efee5fc522be3b2d5c572b6916957fa215823ed9db40450f556a600c49854"
+  },
+  "binary_sha256": "4bdb8e1b3261a044d6d5b563b15dcf5116aafd931b1b6cbc3fc82f2eba3c8909",
+  "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: aarch64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2",
+  "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+  "build_command": [
+    "/Users/james/.cargo/bin/cargo",
+    "bench",
+    "--locked",
+    "--all-features",
+    "--bench",
+    "delivery",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "executable": "build/delivery-v4",
+  "source_clean_before_build": true
+}

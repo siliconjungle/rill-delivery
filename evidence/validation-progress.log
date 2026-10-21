@@ -1,0 +1,7 @@
+{"check": "tests-release", "exit_code": 0}
+{"check": "clippy", "exit_code": 0}
+{"check": "format", "exit_code": 0}
+{"check": "msrv", "exit_code": 0}
+{"check": "example", "exit_code": 0}
+{"check": "normal-dependencies", "exit_code": 0}
+{"check": "package", "exit_code": 0}

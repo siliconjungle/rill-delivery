@@ -76,3 +76,7 @@ Versions and checksums are pinned in [inventory.json](inventory.json). Metadata 
 | [raft](https://docs.rs/raft) | 0.7.0 | durable-replication-reference | Metadata/API reference; not performance-tested |
 | [spacetimedb](https://docs.rs/spacetimedb/2.12.0/) | 2.12.0 | durable-replication-reference | Metadata/API reference; not performance-tested |
 | [spacetimedb-client-api](https://docs.rs/spacetimedb-client-api/1.3.0/) | 1.3.0 | durable-replication-reference | Metadata/API reference; not performance-tested |
+
+## Measurement dependency
+
+[cpu-time 1.0.0](https://docs.rs/cpu-time/1.0.0/cpu_time/) supplies process and thread CPU clocks to the benchmark only. It is additional to the 72 delivery/adjacent candidates above; the metadata inventory therefore has 73 crate entries. It is not a normal library dependency or a competing delivery engine.

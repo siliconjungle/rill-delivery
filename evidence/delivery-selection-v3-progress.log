@@ -1,0 +1,125 @@
+completed 21/444
+completed 42/444
+completed 63/444
+completed 84/444
+completed 105/444
+completed 126/444
+completed 147/444
+completed 168/444
+completed 189/444
+completed 210/444
+completed 231/444
+completed 252/444
+completed 273/444
+completed 294/444
+completed 315/444
+completed 336/444
+completed 357/444
+completed 378/444
+completed 399/444
+completed 420/444
+completed 441/444
+{
+  "fanout": [
+    {
+      "backend": "heap2",
+      "median_ms": 78.834292,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 79.232021,
+      "runs": 2
+    },
+    {
+      "backend": "cached-scan",
+      "median_ms": 81.653792,
+      "runs": 2
+    }
+  ],
+  "resident": [
+    {
+      "backend": "switch4-32",
+      "median_ms": 556.39075,
+      "runs": 2
+    },
+    {
+      "backend": "heap2",
+      "median_ms": 583.0467085,
+      "runs": 2
+    },
+    {
+      "backend": "adaptive4",
+      "median_ms": 600.3538955,
+      "runs": 2
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "sorted",
+      "median_ms": 318.0724165,
+      "runs": 2
+    },
+    {
+      "backend": "switch0-8",
+      "median_ms": 319.1467915,
+      "runs": 2
+    },
+    {
+      "backend": "cached4",
+      "median_ms": 322.038854,
+      "runs": 2
+    }
+  ],
+  "slow": [
+    {
+      "backend": "heap4",
+      "median_ms": 337.004229,
+      "runs": 2
+    },
+    {
+      "backend": "heap16",
+      "median_ms": 338.7545,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 362.4180205,
+      "runs": 2
+    }
+  ],
+  "loss": [
+    {
+      "backend": "switch4-16",
+      "median_ms": 390.9506875,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 391.425375,
+      "runs": 2
+    },
+    {
+      "backend": "switch0-8",
+      "median_ms": 395.909917,
+      "runs": 2
+    }
+  ],
+  "events": [
+    {
+      "backend": "heap16",
+      "median_ms": 177.495896,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 181.362146,
+      "runs": 2
+    },
+    {
+      "backend": "heap8",
+      "median_ms": 183.1374795,
+      "runs": 2
+    }
+  ]
+}

@@ -2,13 +2,87 @@
   "schema": 1,
   "state": "active",
   "keep": [
-    {"path": ".git", "reason": "Exact implementation history and reproducibility"},
-    {"path": "src", "reason": "Generic standalone Rust library"},
-    {"path": "tests", "reason": "Independent behavioral proofs"},
-    {"path": "benches", "reason": "Competing algorithms and performance reproduction"},
-    {"path": "tools", "reason": "Fetch, validation and performance reproduction"},
-    {"path": "research", "reason": "Primary-source catalog, source pins and protocol"},
-    {"path": "evidence", "reason": "Selected correctness, performance and storage proofs"}
+    {
+      "path": ".git",
+      "reason": "Exact implementation history and reproducibility"
+    },
+    {
+      "path": "src",
+      "reason": "Generic standalone Rust library"
+    },
+    {
+      "path": "tests",
+      "reason": "Independent behavioral proofs"
+    },
+    {
+      "path": "benches",
+      "reason": "Competing algorithms and performance reproduction"
+    },
+    {
+      "path": "tools",
+      "reason": "Fetch, validation and performance reproduction"
+    },
+    {
+      "path": "research",
+      "reason": "Primary-source catalog, source pins and protocol"
+    },
+    {
+      "path": "evidence",
+      "reason": "Selected correctness, performance and storage proofs"
+    },
+    {
+      "path": "Cargo.toml",
+      "reason": "Standalone manifest and features"
+    },
+    {
+      "path": "Cargo.lock",
+      "reason": "Exact comparison dependency resolution"
+    },
+    {
+      "path": "README.md",
+      "reason": "API contracts and research scope"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "reason": "Open source license"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "reason": "Open source license"
+    },
+    {
+      "path": ".github",
+      "reason": "Portable correctness CI"
+    },
+    {
+      "path": ".gitignore",
+      "reason": "Exclude caches, private storage audits and generated outputs"
+    },
+    {
+      "path": "examples",
+      "reason": "Generic integration example"
+    },
+    {
+      "path": "storage-retention.json",
+      "reason": "Exact retention declarations"
+    },
+    {
+      "path": "build/delivery-release",
+      "reason": "Selected exact uninstrumented final comparison executable"
+    },
+    {
+      "path": "build/delivery-allocations",
+      "reason": "Exact separate measurement-instrumented executable"
+    }
   ],
-  "safe_to_remove": []
+  "safe_to_remove": [
+    {
+      "path": "target",
+      "reason": "Completed Cargo validation staging; required checks/logs, frozen executable and source inputs are retained. Rebuild from the lockfile if needed."
+    },
+    {
+      "path": "build/msrv-target",
+      "reason": "Completed Cargo validation staging; required checks/logs, frozen executable and source inputs are retained. Rebuild from the lockfile if needed."
+    }
+  ]
 }

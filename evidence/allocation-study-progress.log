@@ -1,0 +1,53 @@
+{
+  "resident": [
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 304.36375,
+      "runs": 1
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 618.353583,
+      "runs": 1
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 618.582167,
+      "runs": 1
+    }
+  ],
+  "fanout": [
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 65.209083,
+      "runs": 1
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 98.672375,
+      "runs": 1
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 223.370541,
+      "runs": 1
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 166.386583,
+      "runs": 1
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 379.128417,
+      "runs": 1
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 407.638958,
+      "runs": 1
+    }
+  ]
+}

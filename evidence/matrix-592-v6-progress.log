@@ -1,0 +1,47 @@
+completed 21/592
+completed 42/592
+completed 63/592
+completed 84/592
+completed 105/592
+completed 126/592
+completed 147/592
+completed 168/592
+completed 189/592
+completed 210/592
+completed 231/592
+completed 252/592
+completed 273/592
+completed 294/592
+completed 315/592
+completed 336/592
+completed 357/592
+completed 378/592
+completed 399/592
+completed 420/592
+completed 441/592
+completed 462/592
+completed 483/592
+completed 504/592
+completed 525/592
+completed 546/592
+completed 567/592
+completed 588/592
+{
+  "resident": [
+    {
+      "backend": "switch4-16-handles-shards8",
+      "median_ms": 172.079042,
+      "runs": 1
+    },
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 176.913083,
+      "runs": 1
+    },
+    {
+      "backend": "switch8-32-shards8",
+      "median_ms": 177.555625,
+      "runs": 1
+    }
+  ]
+}

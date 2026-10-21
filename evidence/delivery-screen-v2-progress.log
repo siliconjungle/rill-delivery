@@ -1,0 +1,107 @@
+completed 21/72
+completed 42/72
+completed 63/72
+{
+  "fanout": [
+    {
+      "backend": "heap4",
+      "median_ms": 101.3114585,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 104.851625,
+      "runs": 2
+    },
+    {
+      "backend": "adaptive8",
+      "median_ms": 108.830375,
+      "runs": 2
+    }
+  ],
+  "resident": [
+    {
+      "backend": "heap4",
+      "median_ms": 596.355771,
+      "runs": 2
+    },
+    {
+      "backend": "sorted",
+      "median_ms": 603.916708,
+      "runs": 2
+    },
+    {
+      "backend": "adaptive8",
+      "median_ms": 670.9500415,
+      "runs": 2
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "heap4",
+      "median_ms": 319.7537505,
+      "runs": 2
+    },
+    {
+      "backend": "orx-index8",
+      "median_ms": 333.090854,
+      "runs": 2
+    },
+    {
+      "backend": "sorted",
+      "median_ms": 335.724583,
+      "runs": 2
+    }
+  ],
+  "slow": [
+    {
+      "backend": "heap4",
+      "median_ms": 383.8328125,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 398.473396,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 400.056479,
+      "runs": 2
+    }
+  ],
+  "loss": [
+    {
+      "backend": "scan",
+      "median_ms": 380.200021,
+      "runs": 2
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 381.0257705,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 383.17475,
+      "runs": 2
+    }
+  ],
+  "events": [
+    {
+      "backend": "heap4",
+      "median_ms": 184.397813,
+      "runs": 2
+    },
+    {
+      "backend": "scan",
+      "median_ms": 186.717291,
+      "runs": 2
+    },
+    {
+      "backend": "hybrid64",
+      "median_ms": 192.369292,
+      "runs": 2
+    }
+  ]
+}
