@@ -7,7 +7,7 @@ use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
 static NEXT_MAILBOX: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Error { InvalidConfig, Capacity, MessageTooLarge, ClockWentBack, Exhausted, UnknownPeer }
+pub enum Error { InvalidConfig, Capacity, MessageTooLarge, ClockWentBack, Exhausted }
 
 /// Logical wire-byte bounds, including both pending and unacknowledged messages.
 /// Payload allocation size is application-owned; bytes must include framing overhead.
@@ -168,8 +168,7 @@ impl<K: Eq + Hash + Clone,T,Q: ReadyQueue> Mailbox<K,T,Q> {
     pub fn drain_into(&mut self, now: u64, budget: u64, max_items: usize, out: &mut Vec<Delivery<K,T>>) -> Result<u64, Error> {
         if now < self.now { return Err(Error::ClockWentBack); }
         // Reserve enough serial space up front, including attempts later skipped.
-        let attempts=max_items.min(self.ready.len().saturating_add(1));
-        self.serial.checked_add(u64::try_from(attempts).map_err(|_| Error::Exhausted)?).ok_or(Error::Exhausted)?;
+        self.serial.checked_add(u64::try_from(max_items).map_err(|_| Error::Exhausted)?).ok_or(Error::Exhausted)?;
         self.now = now;
         let mut remaining = budget;
         let mut sent = 0;
@@ -274,10 +273,5 @@ impl<K: Eq + Hash + Clone,T,Q: ReadyQueue> Mailbox<K,T,Q> {
     pub fn event_count(&self) -> usize { self.events.len() }
     pub fn has_ready(&self) -> bool {
         !self.ready.is_empty() || self.events.front().is_some_and(|e| e.flight.is_none())
-    }
-    pub(crate) fn identity(&self) -> u64 { self.id }
-    pub(crate) fn byte_limit(&self) -> u64 { self.limits.bytes }
-    pub(crate) fn pending_bytes(&self,key:&K) -> u64 {
-        self.keys.get(key).and_then(|&i| self.slots[i].as_ref()?.pending.as_ref()).map_or(0,|p|u64::from(p.message.bytes))
     }
 }
