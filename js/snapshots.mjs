@@ -20,7 +20,7 @@ export class SnapshotOrder {
   // Prepared hot path: distinct arrays, prevalidated integer limit, and a pure,
   // nonthrowing key reader on one synchronous owner. Use fill for external inputs.
   fillInto(input,out,limit) {
-    out.length=0;if(!limit||!input.length)return out;
+    out.length=0;if(!limit||!input.length)return out;if(input.length===1){out.push(input[0]);return out;}
     if(this.strategy==='reference')return this.reference(input,out,limit);
     if(this.strategy==='pooled'){this.pooled(input,out,limit);this.map.clear();for(let i=0;i<this.used;i++)this.groups[i].length=0;this.used=0;return out;}
     if(this.strategy==='runs')this.runs(input,out,limit);else this.linked(input,out,limit);
