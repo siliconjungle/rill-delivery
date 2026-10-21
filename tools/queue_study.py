@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import platform
 import random
+import re
 import statistics
 import subprocess
 import time
@@ -26,15 +27,23 @@ def main():
     p.add_argument("--cases", nargs="+", default=CASES)
     p.add_argument("--backends", nargs="+", default=BACKENDS)
     p.add_argument("--label",default=None)
+    p.add_argument("--bench",choices=["queues","delivery"],default="queues")
     args = p.parse_args()
     binary = Path(args.binary).resolve()
+    receipt_path=ROOT/'evidence'/(binary.name+'-build.json')
+    receipt=json.loads(receipt_path.read_text())
+    if sha(binary)!=receipt['binary_sha256']:raise SystemExit('frozen executable hash differs from build receipt')
+    for path,digest in receipt['source_sha256'].items():
+        original=subprocess.check_output(['git','show',receipt['source_commit']+':'+path],cwd=ROOT)
+        if hashlib.sha256(original).hexdigest()!=digest:raise SystemExit('committed source differs from build receipt: '+path)
     label=args.label or args.phase
     output = ROOT / "evidence" / (label + ".ndjson")
     if output.exists(): raise SystemExit("Refusing to overwrite existing measurements")
     config = {"schema":1,"phase":args.phase,"binary_sha256":sha(binary),"host":platform.platform(),
               "machine":platform.machine(),"python":platform.python_version(),"argv":vars(args),
-              "source_sha256":{str(f.relative_to(ROOT)):sha(f) for f in sorted(ROOT.glob("src/*.rs"))},
-              "bench_sha256":sha(ROOT/"benches/queues.rs"),"driver_sha256":sha(Path(__file__)),
+              "source_sha256":receipt['source_sha256'],"source_commit":receipt['source_commit'],
+              "build_receipt_sha256":sha(receipt_path),
+              "bench_sha256":receipt['source_sha256']['benches/'+args.bench+'.rs'],"driver_sha256":sha(Path(__file__)),
               "clock":"Instant wall time; output construction and queue destruction included; output vector verification/destruction outside timing",
               "other_workers":"left running; parallel screen timings cannot support acceptance claims",
               "seeds":[71923,61937] if args.phase=="parallel-screen" else [982451653,961748941]}
@@ -49,9 +58,13 @@ def main():
     def run(task):
         b,c,s,rep=task
         started=time.monotonic()
-        proc=subprocess.run([str(binary),b,c,str(s)],capture_output=True,text=True)
+        cmd=[str(binary),b,c,str(s)]
+        if platform.system()=='Darwin':cmd=['/usr/bin/time','-l',*cmd]
+        proc=subprocess.run(cmd,capture_output=True,text=True)
         if proc.returncode: raise RuntimeError((task,proc.returncode,proc.stderr))
         result=json.loads(proc.stdout)
+        match=re.search(r'(\d+)\s+maximum resident set size',proc.stderr)
+        if match:result['peak_process_rss_bytes']=int(match[1])
         return {**result,"repetition":rep,"process_seconds":time.monotonic()-started}
     with output.open("w",buffering=1) as f:
         if args.phase=="parallel-screen":
@@ -64,6 +77,10 @@ def main():
                 f.write(json.dumps(run(task))+"\n")
                 if (i+1)%21==0: print(f"completed {i+1}/{len(tasks)}",flush=True)
     rows=[json.loads(x) for x in output.read_text().splitlines()]
+    assert all(r['exact_oracle'] for r in rows)
+    for case in args.cases:
+        for seed in config['seeds']:
+            assert len({(r['checksum'],r['outputs']) for r in rows if r['case']==case and r['seed']==seed})==1,'delivery differs across implementations'
     by={}
     for row in rows: by.setdefault((row["case"],row["backend"]),[]).append(row["elapsed_ns"])
     summary={c: sorted([{"backend":b,"median_ms":statistics.median(v)/1e6,"runs":len(v)} for (case,b),v in by.items() if case==c],key=lambda x:x["median_ms"]) for c in args.cases}

@@ -17,6 +17,8 @@ SOURCES = {
     "queue-components": "priority-queue keyed_priority_queue indexed_priority_queue orx-priority-queue dary_heap binary-heap-plus radix-heap priq priority-channel cohort-queue",
     "storage-components": "bytes slab slotmap generational-arena fixedbitset bitvec roaring hashbrown ahash",
     "rate-limit-components": "governor ratelimit leaky-bucket leaky-bucket-lite direct",
+    "broker-and-flow-control-reference": "zenoh async-nats nats rumqttc paho-mqtt redis lapin rdkafka rskafka h2 tonic tarpc",
+    "durable-replication-reference": "openraft raft spacetimedb spacetimedb-client-api",
 }
 
 

@@ -89,6 +89,25 @@ pub struct Receipt {
     slot: usize,
     event: bool,
 }
+impl Receipt {
+    /// Transport-neutral fields for an application-owned ACK envelope. These
+    /// identify a process-local delivery attempt, not a durable session or proof
+    /// of authentication. Preserve all four fields when reconstructing an ACK.
+    pub fn parts(self) -> (u64, u64, u64, bool) {
+        (self.mailbox, self.serial, self.slot as u64, self.event)
+    }
+    pub fn from_parts(mailbox: u64, serial: u64, slot: u64, event: bool) -> Option<Self> {
+        if mailbox == 0 || serial == 0 {
+            return None;
+        }
+        Some(Self {
+            mailbox,
+            serial,
+            slot: usize::try_from(slot).ok()?,
+            event,
+        })
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Kind<K> {
@@ -215,6 +234,17 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
         priority_delay: u16,
         now: u64,
     ) -> Result<Offer, Error> {
+        self.offer_state_bounded(key, revision, message, priority_delay, now, u64::MAX)
+    }
+    pub(crate) fn offer_state_bounded(
+        &mut self,
+        key: K,
+        revision: u64,
+        message: Message<T>,
+        priority_delay: u16,
+        now: u64,
+        headroom: u64,
+    ) -> Result<Offer, Error> {
         self.check(now, &message)?;
         let index = self.keys.get(&key).copied();
         if let Some(i) = index {
@@ -227,6 +257,12 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
         let old_bytes = index
             .and_then(|i| self.slots[i].as_ref()?.pending.as_ref())
             .map_or(0, |p| u64::from(p.message.bytes));
+        if u64::from(message.bytes).saturating_sub(old_bytes) > headroom {
+            return Err(Error::Capacity);
+        }
+        let old_rank = index
+            .and_then(|i| self.slots[i].as_ref()?.pending.as_ref())
+            .map(|p| p.rank);
         let total = (self.bytes - old_bytes)
             .checked_add(u64::from(message.bytes))
             .ok_or(Error::Capacity)?;
@@ -273,7 +309,7 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
             i
         };
         let state = self.slots[i].as_ref().unwrap();
-        if state.flight.is_none() {
+        if state.flight.is_none() && old_rank != Some(state.pending.as_ref().unwrap().rank) {
             self.ready.upsert(Entry {
                 id: i,
                 rank: state.pending.as_ref().unwrap().rank,
@@ -525,11 +561,5 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Mailbox<K, T, Q> {
     }
     pub(crate) fn byte_limit(&self) -> u64 {
         self.limits.bytes
-    }
-    pub(crate) fn pending_bytes(&self, key: &K) -> u64 {
-        self.keys
-            .get(key)
-            .and_then(|&i| self.slots[i].as_ref()?.pending.as_ref())
-            .map_or(0, |p| u64::from(p.message.bytes))
     }
 }

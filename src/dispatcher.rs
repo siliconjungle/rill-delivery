@@ -201,17 +201,15 @@ impl<K: Eq + Hash + Clone, T, Q: ReadyQueue> Dispatcher<K, T, Q> {
         }
         let i = self.index(peer)?;
         let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
-        let stale = m.progress(&key).is_some_and(|p| revision <= p.latest);
-        if !stale {
-            let projected = (self.bytes - m.pending_bytes(&key))
-                .checked_add(u64::from(message.bytes()))
-                .ok_or(Error::Capacity)?;
-            if projected > self.max_bytes {
-                return Err(Error::Capacity);
-            }
-        }
         let before = m.buffered_bytes();
-        let outcome = m.offer_state(key, revision, message, priority_delay, now)?;
+        let outcome = m.offer_state_bounded(
+            key,
+            revision,
+            message,
+            priority_delay,
+            now,
+            self.max_bytes - self.bytes,
+        )?;
         self.bytes = self.bytes - before + m.buffered_bytes();
         self.now = now;
         self.refresh(i);

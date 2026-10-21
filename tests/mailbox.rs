@@ -122,6 +122,11 @@ fn foreign_receipts_and_payload_sharing() {
     assert!(Arc::ptr_eq(&x[0].message.payload, &y[0].message.payload));
     assert!(!a.ack(y[0].receipt));
     assert!(!b.retry(x[0].receipt));
+    let (mailbox, serial, slot, event) = x[0].receipt.parts();
+    let decoded = Receipt::from_parts(mailbox, serial, slot, event).unwrap();
+    assert_eq!(decoded, x[0].receipt);
+    assert!(a.ack(decoded));
+    assert!(Receipt::from_parts(0, serial, slot, event).is_none());
 }
 
 #[test]
