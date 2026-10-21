@@ -1,0 +1,66 @@
+✖ complete deterministic mutation traces match Rust for every JS ready queue (20.299125ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.256333
+
+✖ failing tests:
+
+test at js/test/rust-parity.test.mjs:3:1
+✖ complete deterministic mutation traces match Rust for every JS ready queue (20.299125ms)
+  AssertionError [ERR_ASSERTION]: heap4 step 360 drain
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      [
+        0,
+        19,
+        1369,
+  ...
+        1,
+  +     295,
+  -     245,
+        74,
+        7
+      ]
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/james/Documents/ChatGPT/3d-modelling/rill-delivery/js/test/rust-parity.test.mjs:17:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [
+      [
+         0,  19, 1369,
+        19, 179,   73,
+         0
+      ],
+      [
+        0,   1, 1608,
+        1, 295,   74,
+        7
+      ]
+    ],
+    expected: [
+      [
+         0,  19, 1369,
+        19, 179,   73,
+         0
+      ],
+      [
+        0,   1, 1608,
+        1, 245,   74,
+        7
+      ]
+    ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

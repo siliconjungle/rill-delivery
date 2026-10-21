@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: heap4: queue agrees with a sorted independent map under mutation
+ok 1 - heap4: queue agrees with a sorted independent map under mutation
+  ---
+  duration_ms: 146.509167
+  type: 'test'
+  ...
+# Subtest: heap4: state coalesces but an exact attempt survives until ACK or retry
+ok 2 - heap4: state coalesces but an exact attempt survives until ACK or retry
+  ---
+  duration_ms: 1.197167
+  type: 'test'
+  ...
+# Subtest: heap4: events stay ordered through retry and cannot coalesce
+ok 3 - heap4: events stay ordered through retry and cannot coalesce
+  ---
+  duration_ms: 0.301542
+  type: 'test'
+  ...
+# Subtest: heap4: budget scans skip a large row and floor decreases when work reactivates
+ok 4 - heap4: budget scans skip a large row and floor decreases when work reactivates
+  ---
+  duration_ms: 0.132875
+  type: 'test'
+  ...
+# Subtest: heap8: queue agrees with a sorted independent map under mutation
+ok 5 - heap8: queue agrees with a sorted independent map under mutation
+  ---
+  duration_ms: 106.9385
+  type: 'test'
+  ...
+# Subtest: heap8: state coalesces but an exact attempt survives until ACK or retry
+ok 6 - heap8: state coalesces but an exact attempt survives until ACK or retry
+  ---
+  duration_ms: 0.23675
+  type: 'test'
+  ...
+# Subtest: heap8: events stay ordered through retry and cannot coalesce
+ok 7 - heap8: events stay ordered through retry and cannot coalesce
+  ---
+  duration_ms: 0.148375
+  type: 'test'
+  ...
+# Subtest: heap8: budget scans skip a large row and floor decreases when work reactivates
+ok 8 - heap8: budget scans skip a large row and floor decreases when work reactivates
+  ---
+  duration_ms: 0.061833
+  type: 'test'
+  ...
+# Subtest: scan: queue agrees with a sorted independent map under mutation
+ok 9 - scan: queue agrees with a sorted independent map under mutation
+  ---
+  duration_ms: 105.075416
+  type: 'test'
+  ...
+# Subtest: scan: state coalesces but an exact attempt survives until ACK or retry
+ok 10 - scan: state coalesces but an exact attempt survives until ACK or retry
+  ---
+  duration_ms: 0.412416
+  type: 'test'
+  ...
+# Subtest: scan: events stay ordered through retry and cannot coalesce
+ok 11 - scan: events stay ordered through retry and cannot coalesce
+  ---
+  duration_ms: 0.106542
+  type: 'test'
+  ...
+# Subtest: scan: budget scans skip a large row and floor decreases when work reactivates
+ok 12 - scan: budget scans skip a large row and floor decreases when work reactivates
+  ---
+  duration_ms: 0.048292
+  type: 'test'
+  ...
+# Subtest: cached: queue agrees with a sorted independent map under mutation
+ok 13 - cached: queue agrees with a sorted independent map under mutation
+  ---
+  duration_ms: 101.485791
+  type: 'test'
+  ...
+# Subtest: cached: state coalesces but an exact attempt survives until ACK or retry
+ok 14 - cached: state coalesces but an exact attempt survives until ACK or retry
+  ---
+  duration_ms: 0.129833
+  type: 'test'
+  ...
+# Subtest: cached: events stay ordered through retry and cannot coalesce
+ok 15 - cached: events stay ordered through retry and cannot coalesce
+  ---
+  duration_ms: 0.049167
+  type: 'test'
+  ...
+# Subtest: cached: budget scans skip a large row and floor decreases when work reactivates
+ok 16 - cached: budget scans skip a large row and floor decreases when work reactivates
+  ---
+  duration_ms: 0.043416
+  type: 'test'
+  ...
+# Subtest: admission is atomic, priority promotion retains age, counters reject lossy integers
+ok 17 - admission is atomic, priority promotion retains age, counters reject lossy integers
+  ---
+  duration_ms: 0.183042
+  type: 'test'
+  ...
+# Subtest: global retained-byte bounds include flights and protect peer incarnations
+ok 18 - global retained-byte bounds include flights and protect peer incarnations
+  ---
+  duration_ms: 0.474917
+  type: 'test'
+  ...
+# Subtest: integer token bucket saturates without overflowing and rejects reversed time
+ok 19 - integer token bucket saturates without overflowing and rejects reversed time
+  ---
+  duration_ms: 0.056417
+  type: 'test'
+  ...
+# Subtest: 20,000 peers all converge with bounded service and idle recipients stop polling
+ok 20 - 20,000 peers all converge with bounded service and idle recipients stop polling
+  ---
+  duration_ms: 51.757083
+  type: 'test'
+  ...
+# Subtest: retrying a superseded flight preserves its older age and urgency
+ok 21 - retrying a superseded flight preserves its older age and urgency
+  ---
+  duration_ms: 0.10875
+  type: 'test'
+  ...
+# Subtest: failed admission does not mutate progress and a budget-zero drain cannot exhaust serial space
+ok 22 - failed admission does not mutate progress and a budget-zero drain cannot exhaust serial space
+  ---
+  duration_ms: 0.1425
+  type: 'test'
+  ...
+# Subtest: complete deterministic mutation traces match Rust for every JS ready queue
+ok 23 - complete deterministic mutation traces match Rust for every JS ready queue
+  ---
+  duration_ms: 167.258291
+  type: 'test'
+  ...
+# Subtest: reference: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+ok 24 - reference: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+  ---
+  duration_ms: 69.350083
+  type: 'test'
+  ...
+# Subtest: pooled: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+ok 25 - pooled: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+  ---
+  duration_ms: 38.612083
+  type: 'test'
+  ...
+# Subtest: linked: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+ok 26 - linked: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+  ---
+  duration_ms: 36.920042
+  type: 'test'
+  ...
+# Subtest: runs: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+ok 27 - runs: exact fair order, payload identity and bounded output across repeated heterogeneous banks
+  ---
+  duration_ms: 40.302209
+  type: 'test'
+  ...
+# Subtest: reentrant key callbacks fail explicitly and temporary references are released on exceptions
+ok 28 - reentrant key callbacks fail explicitly and temporary references are released on exceptions
+  ---
+  duration_ms: 0.309375
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 569.873834

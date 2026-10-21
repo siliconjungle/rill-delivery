@@ -1,0 +1,34 @@
+✔ heap4: queue agrees with a sorted independent map under mutation (101.806084ms)
+✔ heap4: state coalesces but an exact attempt survives until ACK or retry (1.191458ms)
+✔ heap4: events stay ordered through retry and cannot coalesce (0.162708ms)
+✔ heap4: budget scans skip a large row and floor decreases when work reactivates (0.127917ms)
+✔ heap8: queue agrees with a sorted independent map under mutation (94.815542ms)
+✔ heap8: state coalesces but an exact attempt survives until ACK or retry (0.180958ms)
+✔ heap8: events stay ordered through retry and cannot coalesce (0.096ms)
+✔ heap8: budget scans skip a large row and floor decreases when work reactivates (0.063541ms)
+✔ scan: queue agrees with a sorted independent map under mutation (100.294292ms)
+✔ scan: state coalesces but an exact attempt survives until ACK or retry (0.180208ms)
+✔ scan: events stay ordered through retry and cannot coalesce (0.075042ms)
+✔ scan: budget scans skip a large row and floor decreases when work reactivates (0.055208ms)
+✔ cached: queue agrees with a sorted independent map under mutation (98.692125ms)
+✔ cached: state coalesces but an exact attempt survives until ACK or retry (0.129208ms)
+✔ cached: events stay ordered through retry and cannot coalesce (0.052834ms)
+✔ cached: budget scans skip a large row and floor decreases when work reactivates (0.046583ms)
+✔ admission is atomic, priority promotion retains age, counters reject lossy integers (0.185ms)
+✔ global retained-byte bounds include flights and protect peer incarnations (0.456708ms)
+✔ integer token bucket saturates without overflowing and rejects reversed time (0.069375ms)
+✔ 20,000 peers all converge with bounded service and idle recipients stop polling (42.664042ms)
+✔ complete deterministic mutation traces match Rust for every JS ready queue (140.046084ms)
+✔ reference: exact fair order, payload identity and bounded output across repeated heterogeneous banks (39.208958ms)
+✔ pooled: exact fair order, payload identity and bounded output across repeated heterogeneous banks (34.326042ms)
+✔ linked: exact fair order, payload identity and bounded output across repeated heterogeneous banks (33.4675ms)
+✔ runs: exact fair order, payload identity and bounded output across repeated heterogeneous banks (33.726042ms)
+✔ reentrant key callbacks fail explicitly and temporary references are released on exceptions (0.257625ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 505.2805

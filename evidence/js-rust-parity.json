@@ -1,0 +1,21 @@
+{
+  "steps": 6000,
+  "queues": 4,
+  "compared_operations": 24000,
+  "operations": {
+    "drain": 706,
+    "offer": 2261,
+    "forget": 746,
+    "noop": 2,
+    "event": 784,
+    "ack": 779,
+    "retry": 722
+  },
+  "oracle_sha256": "a0722d737347554b1eb92e87c73da6505ef81a449e390161336ff42a37739a21",
+  "source_sha256": {
+    "examples/js_oracle.rs": "2bcea9e8390a9e0f4f7d98ebddcc8205705080bb09fdd026fc54d232ddf859f0",
+    "js/index.mjs": "293ac853a630b6fabe472e119ff89bbdc146bfdbbb89133942d5d32dbb0863cb",
+    "js/snapshots.mjs": "7da7d28b5f8a65d326d01ea21ea4ae622a1765d7cf72c6d8a9ba39cc472e5178"
+  },
+  "note": "All operation results, every stream progress value, byte counts, readiness and complete drain vectors match Rust for four independent JS queue strategies."
+}
