@@ -46,6 +46,7 @@ for raw in (ROOT/'evidence/allocation-study.ndjson').read_text().splitlines():
     lines.append(f"| {r['case']} | {r['backend']} | {a['calls']:,} | {a['requested_bytes']/2**20:.1f} | {a['peak_extra_live_bytes']/2**20:.1f} |")
 lines += ['', '## Evidence and limits', '',
     '- [All final process observations](../evidence/final-isolated.ndjson), [configuration](../evidence/final-isolated-config.json), [acceptance with every per-seed and pooled comparison](../evidence/final-isolated-acceptance.json).',
+    '- Current source adds only an exact deprecation-lint annotation/comment around the legacy Rust 1.85 atomic API. The verifier strips only those exact bytes and requires the measured source hash; runtime and benchmark code otherwise match byte-for-byte.',
     '- [Registered plan](final-protocol.json), [frozen selection](selection.json), [exact build receipt](../evidence/delivery-release-build.json), [required validation receipt](../evidence/validation-receipt.json).',
     '- Development includes 37 queue structures and a parallel 592-configuration matrix. Screens are selection data, not headline speed evidence.',
     '- The survey covers 72 related Rust crates plus one CPU measurement dependency and seven public Frontier packages. Three external queue crates have executable component adapters; no claim that 72 complete engines were defeated.',
