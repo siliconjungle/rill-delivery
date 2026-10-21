@@ -33,3 +33,9 @@ test('20,000 peers all converge with bounded service and idle recipients stop po
  for(let at=0;at<50&&d.readyPeers;at++){const out=[];d.dispatchInto(at,{bytes:16000,perPeerBytes:8,deliveries:4000,visits:20000},out);for(const e of out){assert.equal(e.delivery.revision,2);d.ack(e.peer,e.delivery.receipt);}}
  for(const p of peers)assert.equal(d.progress(p,0).acknowledged,2);assert.equal(d.bufferedBytes,0);assert.equal(d.readyPeers,0);
 });
+test('retrying a superseded flight preserves its older age and urgency',()=>{
+ const m=new Mailbox();m.offerState('x',1,msg(1),0,0);const [first]=drain(m);m.offerState('x',2,msg(2),8,10);m.retry(first.receipt);const [latest]=drain(m,10);assert.equal(latest.revision,2);assert.equal(latest.queuedAt,0);assert.equal(m.ack(first.receipt),false);
+});
+test('failed admission does not mutate progress and a budget-zero drain cannot exhaust serial space',()=>{
+ const m=new Mailbox({bytes:4,maxMessageBytes:4});m.offerState('x',1,msg(1));const [first]=drain(m);assert.throws(()=>m.offerState('x',2,msg(2)),/Capacity/);assert.deepEqual(m.progress('x'),{latest:1,acknowledged:null,pending:null,inFlight:1});m.ack(first.receipt);m.serial=Number.MAX_SAFE_INTEGER;assert.equal(m.drainInto(0,0,0,[]),0);assert.throws(()=>m.offerState('x',2,msg(2)),/Exhausted/);assert.equal(m.bufferedBytes,0);
+});

@@ -101,6 +101,10 @@
     {
       "path": "js",
       "reason": "Generic JavaScript port, tests and comparison reproduction inputs"
+    },
+    {
+      "path": "build/js-oracle.ndjson",
+      "reason": "Exact useful cross-language behavior proof input, reproducible from committed oracle source"
     }
   ],
   "safe_to_remove": [

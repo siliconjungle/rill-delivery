@@ -43,12 +43,15 @@ export class SnapshotOrder {
     while(out.length<limit){let found=false;for(let g=0;g<heads.length;g++){const i=heads[g];if(i>=0){out.push(input[i]);heads[g]=next[i];found=true;if(out.length===limit)break;}}if(!found)break;}return out;
   }
   runs(input,out,limit) {
-    const keys=this.keys,heads=this.heads,ends=this.ends;let previous;
-    for(let i=0;i<input.length;i++){
-      const key=this.key(input[i]);if(i&&equal(key,previous)){ends[ends.length-1]=i+1;continue;}
+    const keys=this.keys,heads=this.heads,ends=this.ends;let previous=this.key(input[0]),start=0;
+    for(let i=1;i<input.length;i++){
+      const key=this.key(input[i]);if(equal(key,previous))continue;
+      keys.push(previous);heads.push(start);ends.push(i);
       for(let g=0;g<keys.length;g++)if(equal(keys[g],key)){keys.length=0;heads.length=0;ends.length=0;return this.linked(input,out,limit);}
-      keys.push(key);heads.push(i);ends.push(i+1);previous=key;
+      previous=key;start=i;
     }
+    if(!keys.length){for(let i=0;i<Math.min(input.length,limit);i++)out.push(input[i]);return out;}
+    keys.push(previous);heads.push(start);ends.push(input.length);
     while(out.length<limit){let found=false;for(let g=0;g<heads.length;g++)if(heads[g]<ends[g]){out.push(input[heads[g]++]);found=true;if(out.length===limit)break;}if(!found)break;}return out;
   }
 }
