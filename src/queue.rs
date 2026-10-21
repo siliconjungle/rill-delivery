@@ -5,6 +5,10 @@
 use std::cmp::Reverse;
 use std::collections::{BTreeSet, BinaryHeap};
 
+/// Balanced default selected on development measurements: cached scans for tiny
+/// ready sets, a 4-ary heap for larger ones, and allocation-free demotion.
+pub type DefaultQueue = SwitchingQueue<4, 16>;
+
 /// Stable total ordering. `due` is an urgency rank, not a release time.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Rank {

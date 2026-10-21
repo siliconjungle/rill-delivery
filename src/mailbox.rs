@@ -1,5 +1,5 @@
 //! One recipient's bounded delivery state machine.
-use crate::queue::{Entry, IndexedHeap, Rank, ReadyQueue};
+use crate::queue::{DefaultQueue, Entry, Rank, ReadyQueue};
 use std::collections::{HashMap, VecDeque};
 use std::hash::Hash;
 use std::sync::{
@@ -180,7 +180,7 @@ struct Event<T: ?Sized> {
 /// All methods are synchronous. Shard mailboxes across threads rather than locking
 /// a global queue in the core. A state key is a stream of *replacement snapshots*,
 /// not a chain of patches that depend on skipped revisions.
-pub struct Mailbox<K, T: ?Sized, Q: ReadyQueue = IndexedHeap<4>> {
+pub struct Mailbox<K, T: ?Sized, Q: ReadyQueue = DefaultQueue> {
     id: u64,
     limits: Limits,
     keys: HashMap<K, usize>,

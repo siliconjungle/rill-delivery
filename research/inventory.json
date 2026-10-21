@@ -1154,6 +1154,22 @@
       "updated_at": "2025-08-01T18:26:54.633847Z",
       "metadata_sha256": "5b48021676bf1d28d4858111f7b244d24b64583d02593b9a1f4bcbb0b60a0ce8",
       "fetched": true
+    },
+    {
+      "name": "cpu-time",
+      "category": "measurement-reference",
+      "metadata_url": "https://crates.io/api/v1/crates/cpu-time",
+      "classification": "candidate-component",
+      "benchmark_status": "Measurement-only dependency; not a competing delivery engine",
+      "version": "1.0.0",
+      "description": "    Small crate that provides CPU time measurement.\n",
+      "repository": null,
+      "documentation": "https://docs.rs/cpu-time",
+      "license": "MIT/Apache-2.0",
+      "checksum": "e9e393a7668fe1fad3075085b86c781883000b4ede868f43627b34a87c8b7ded",
+      "updated_at": "2019-10-27T22:41:49.171117Z",
+      "metadata_sha256": "97a57042258905d9a17991ba60d7828b82175e3612d95db595548b015c476a7e",
+      "fetched": true
     }
   ],
   "frontier": [

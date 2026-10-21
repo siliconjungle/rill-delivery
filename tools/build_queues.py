@@ -10,16 +10,19 @@ import argparse
 
 ROOT=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser();p.add_argument('label');p.add_argument('--bench',default='queues')
+p.add_argument('--allocation-profile',action='store_true')
 args=p.parse_args();label=args.label;bench=args.bench
 if not label.replace('-','').isalnum(): raise SystemExit('invalid label')
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def command(*args): return subprocess.check_output(args,cwd=ROOT,text=True).strip()
 source_paths=[ROOT/'Cargo.toml',ROOT/'Cargo.lock',ROOT/'README.md',*sorted((ROOT/'src').glob('*.rs')),ROOT/f'benches/{bench}.rs']
+if args.allocation_profile:source_paths+=sorted((ROOT/'benches/support').glob('*.rs'))
 subprocess.run(['git','diff','--exit-code','HEAD','--',*[str(p.relative_to(ROOT)) for p in source_paths]],cwd=ROOT,check=True)
 revision=command('git','rev-parse','HEAD')
 hashes={str(p.relative_to(ROOT)):sha(p) for p in source_paths}
 entry=Path.home()/'.cargo/bin/cargo'
-build=[str(entry) if entry.exists() else 'cargo','bench','--locked','--all-features','--bench',bench,'--no-run','--message-format=json']
+features='comparisons,allocation-profile' if args.allocation_profile else 'comparisons'
+build=[str(entry) if entry.exists() else 'cargo','bench','--locked','--features',features,'--bench',bench,'--no-run','--message-format=json']
 result=subprocess.run(build,cwd=ROOT,text=True,capture_output=True)
 (ROOT/'evidence'/f'{label}-build.log').write_text(result.stderr)
 result.check_returncode()

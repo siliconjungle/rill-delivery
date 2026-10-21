@@ -11,11 +11,15 @@ readme = "README.md"
 [features]
 default = []
 comparisons = ["dep:priority-queue", "dep:keyed_priority_queue", "dep:orx-priority-queue"]
+allocation-profile = []
 
 [dependencies]
 priority-queue = { version = "=2.7.0", optional = true }
 keyed_priority_queue = { version = "=0.4.2", optional = true }
 orx-priority-queue = { version = "=1.9.0", optional = true }
+
+[dev-dependencies]
+cpu-time = "=1.0.0"
 
 [[bench]]
 name = "queues"

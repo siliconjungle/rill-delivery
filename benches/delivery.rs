@@ -1,9 +1,13 @@
+use cpu_time::{ProcessTime, ThreadTime};
 use rill_delivery::queue::{external::*, *};
 use rill_delivery::*;
 use std::collections::HashMap;
 use std::hint::black_box;
 use std::sync::{Arc, Barrier};
 use std::time::Instant;
+#[cfg(feature = "allocation-profile")]
+#[path = "support/allocations.rs"]
+mod allocation_meter;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Stamp {
@@ -25,6 +29,9 @@ struct Metrics {
     checksum: u64,
     offers: u64,
     peak_bytes: u64,
+    cpu: u128,
+    steady_cpu: u128,
+    allocations: String,
 }
 #[derive(Clone, Copy, Default)]
 struct Mode {
@@ -193,6 +200,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64, worker: Worker) -> (Metrics, Vec<St
     let initial_sync = initial.elapsed().as_nanos();
     let mut frames = Vec::new();
     let mut peak_bytes = 0;
+    let steady_cpu = ThreadTime::now();
     for frame in 1..=12 {
         if let Some(b) = &barrier {
             b.wait();
@@ -266,6 +274,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64, worker: Worker) -> (Metrics, Vec<St
         }
         frames.push(begin.elapsed().as_nanos());
     }
+    let steady_cpu = steady_cpu.elapsed().as_nanos();
     let flushing = Instant::now();
     for (peer, receipt) in held.drain(..) {
         assert!(d.retry(peer, receipt));
@@ -311,6 +320,9 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64, worker: Worker) -> (Metrics, Vec<St
             checksum,
             offers,
             peak_bytes,
+            cpu: 0,
+            steady_cpu,
+            allocations: "null".into(),
         },
         stamps,
     )
@@ -326,6 +338,9 @@ fn checked<Q: ReadyQueue>(case: &str, seed: u64, expected: &[Stamp]) -> Metrics 
         .nth(1)
         .map_or(1, |n| n.parse::<usize>().unwrap());
     assert!([1, 2, 4, 8].contains(&shards));
+    #[cfg(feature = "allocation-profile")]
+    allocation_meter::start();
+    let cpu = ProcessTime::now();
     let (mut metrics, mut actual) = if shards == 1 {
         run::<Q>(
             case,
@@ -367,9 +382,8 @@ fn checked<Q: ReadyQueue>(case: &str, seed: u64, expected: &[Stamp]) -> Metrics 
                 .map(|h| h.join().unwrap())
                 .collect::<Vec<_>>()
         });
-        let total = wall.elapsed().as_nanos();
         let mut aggregate = Metrics {
-            total,
+            total: 0,
             startup: 0,
             initial_sync: 0,
             frames: vec![0; 12],
@@ -377,6 +391,9 @@ fn checked<Q: ReadyQueue>(case: &str, seed: u64, expected: &[Stamp]) -> Metrics 
             checksum: 0,
             offers: 0,
             peak_bytes: 0,
+            cpu: 0,
+            steady_cpu: 0,
+            allocations: "null".into(),
         };
         let mut output = Vec::new();
         for (m, mut values) in results {
@@ -385,13 +402,20 @@ fn checked<Q: ReadyQueue>(case: &str, seed: u64, expected: &[Stamp]) -> Metrics 
             aggregate.flush = aggregate.flush.max(m.flush);
             aggregate.offers += m.offers;
             aggregate.peak_bytes += m.peak_bytes;
+            aggregate.steady_cpu += m.steady_cpu;
             for (i, n) in m.frames.into_iter().enumerate() {
                 aggregate.frames[i] = aggregate.frames[i].max(n);
             }
             output.append(&mut values);
         }
+        aggregate.total = wall.elapsed().as_nanos();
         (aggregate, output)
     };
+    metrics.cpu = cpu.elapsed().as_nanos();
+    #[cfg(feature = "allocation-profile")]
+    {
+        metrics.allocations = allocation_meter::stop();
+    }
     // Independent recipients have no cross-recipient ordering contract. Compare
     // exact handoff ticks and complete order within each recipient/tick instead.
     actual.sort_by_key(|s| (s.sent_at, s.peer));
@@ -427,6 +451,7 @@ fn main() {
     let stripped = backend.replace("-handles", "").replace("-copied", "");
     let base = stripped.split("-shards").next().unwrap();
     let m = match base {
+        "default" => checked::<DefaultQueue>(case, seed, &expected),
         "scan" => checked::<ScanQueue>(case, seed, &expected),
         "sorted" => checked::<SortedQueue>(case, seed, &expected),
         "tree" => checked::<TreeQueue>(case, seed, &expected),
@@ -466,5 +491,5 @@ fn main() {
         "adaptive32" => checked::<AdaptiveQueue<32>>(case, seed, &expected),
         _ => panic!("unknown backend"),
     };
-    println!("{{\"backend\":\"{backend}\",\"case\":\"{case}\",\"seed\":{seed},\"peers\":20000,\"elapsed_ns\":{},\"startup_ns\":{},\"initial_sync_ns\":{},\"frame_ns\":{:?},\"flush_ns\":{},\"checksum\":{},\"outputs\":{},\"offers\":{},\"peak_buffered_bytes\":{},\"exact_oracle\":true}}",m.total,m.startup,m.initial_sync,m.frames,m.flush,m.checksum,expected.len(),m.offers,m.peak_bytes);
+    println!("{{\"backend\":\"{backend}\",\"case\":\"{case}\",\"seed\":{seed},\"peers\":20000,\"elapsed_ns\":{},\"startup_ns\":{},\"initial_sync_ns\":{},\"frame_ns\":{:?},\"flush_ns\":{},\"checksum\":{},\"outputs\":{},\"offers\":{},\"peak_buffered_bytes\":{},\"cpu_ns\":{},\"steady_cpu_ns\":{},\"allocation_profile\":{},\"allocations\":{},\"exact_oracle\":true}}",m.total,m.startup,m.initial_sync,m.frames,m.flush,m.checksum,expected.len(),m.offers,m.peak_bytes,m.cpu,m.steady_cpu,cfg!(feature="allocation-profile"),m.allocations);
 }

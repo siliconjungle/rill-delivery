@@ -151,3 +151,14 @@ Building a frozen benchmark requires committed source and refuses to overwrite a
 existing frozen executable. `comparisons` enables the optional external queue
 dependencies; normal library users do not need that feature. `ReadyQueue` and explicit
 queue types permit workload-specific tuning without changing delivery semantics.
+
+The default `SwitchingQueue<4, 16>` was selected on development data. It reuses the
+same storage while moving between tiny cached scans and a 4-ary heap, retaining an
+O(log n) large-queue path. This is a balanced default, not a claim that a single queue
+wins every fixture. The frozen final comparison also tests the actual default alias.
+
+Normal benchmark builds enable `comparisons` only. `allocation-profile` adds a
+measurement-only system-allocator shim to the delivery benchmark; those timings
+are excluded from speed acceptance. Its counts cover the candidate harness and
+returned proof buffers, not the reference run or a library-only physical heap bound.
+Process CPU time and summed worker CPU time are reported separately from wall time.

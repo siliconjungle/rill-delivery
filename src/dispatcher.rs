@@ -1,4 +1,4 @@
-use crate::queue::{IndexedHeap, ReadyQueue};
+use crate::queue::{DefaultQueue, ReadyQueue};
 use crate::{
     Delivery, Error, Limits, Mailbox, Message, Offer, Progress, Receipt, Stream, TokenBucket,
 };
@@ -68,7 +68,7 @@ struct Slot<K, T: ?Sized, Q: ReadyQueue> {
 /// Bounded multi-recipient scheduler with an intrusive active list and byte-credit
 /// fairness. Each call visits a recipient at most once; inactive recipients consume
 /// no polling work. Rate-limited active recipients can still consume one visit.
-pub struct Dispatcher<K, T: ?Sized, Q: ReadyQueue = IndexedHeap<4>> {
+pub struct Dispatcher<K, T: ?Sized, Q: ReadyQueue = DefaultQueue> {
     peers: Vec<Slot<K, T, Q>>,
     free: Vec<usize>,
     count: usize,

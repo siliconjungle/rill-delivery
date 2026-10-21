@@ -19,6 +19,7 @@ SOURCES = {
     "rate-limit-components": "governor ratelimit leaky-bucket leaky-bucket-lite direct",
     "broker-and-flow-control-reference": "zenoh async-nats nats rumqttc paho-mqtt redis lapin rdkafka rskafka h2 tonic tarpc",
     "durable-replication-reference": "openraft raft spacetimedb spacetimedb-client-api",
+    "measurement-reference": "cpu-time",
 }
 
 
