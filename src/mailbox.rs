@@ -17,6 +17,7 @@ pub enum Error {
     ClockWentBack,
     Exhausted,
     UnknownPeer,
+    UnknownStream,
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -29,6 +30,7 @@ impl std::fmt::Display for Error {
             Self::ClockWentBack => "delivery scheduler time must not go backwards",
             Self::Exhausted => "delivery identity or time space exhausted",
             Self::UnknownPeer => "recipient handle is stale or belongs to another dispatcher",
+            Self::UnknownStream => "state-stream handle is stale or belongs to another recipient",
         })
     }
 }
@@ -136,6 +138,20 @@ pub struct Progress {
     pub pending: Option<u64>,
     pub in_flight: Option<u64>,
 }
+/// Prepared lookup for an existing state stream. It supports arbitrary application
+/// keys while avoiding key hashing/cloning on subsequent offers. Forgetting the key
+/// or removing its recipient invalidates the handle, including after slot reuse.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub struct Stream {
+    mailbox: u64,
+    slot: usize,
+    identity: u64,
+}
+struct Admission {
+    priority_delay: u16,
+    now: u64,
+    headroom: u64,
+}
 
 struct Value<T: ?Sized> {
     revision: u64,
@@ -153,6 +169,7 @@ struct State<K, T: ?Sized> {
     acknowledged: Option<u64>,
     pending: Option<Value<T>>,
     flight: Option<Flight<T>>,
+    identity: u64,
 }
 struct Event<T: ?Sized> {
     value: Value<T>,
@@ -251,6 +268,80 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
     ) -> Result<Offer, Error> {
         self.check(now, &message)?;
         let index = self.keys.get(&key).copied();
+        self.offer_at(
+            index,
+            Some(key),
+            revision,
+            message,
+            Admission {
+                priority_delay,
+                now,
+                headroom,
+            },
+        )
+    }
+    pub fn stream(&self, key: &K) -> Option<Stream> {
+        let slot = *self.keys.get(key)?;
+        Some(Stream {
+            mailbox: self.id,
+            slot,
+            identity: self.slots[slot].as_ref()?.identity,
+        })
+    }
+    pub fn offer_stream(
+        &mut self,
+        stream: Stream,
+        revision: u64,
+        message: Message<T>,
+        priority_delay: u16,
+        now: u64,
+    ) -> Result<Offer, Error> {
+        self.offer_stream_bounded(stream, revision, message, priority_delay, now, u64::MAX)
+    }
+    pub(crate) fn offer_stream_bounded(
+        &mut self,
+        stream: Stream,
+        revision: u64,
+        message: Message<T>,
+        priority_delay: u16,
+        now: u64,
+        headroom: u64,
+    ) -> Result<Offer, Error> {
+        self.check(now, &message)?;
+        if stream.mailbox != self.id
+            || !self
+                .slots
+                .get(stream.slot)
+                .and_then(Option::as_ref)
+                .is_some_and(|s| s.identity == stream.identity)
+        {
+            return Err(Error::UnknownStream);
+        }
+        self.offer_at(
+            Some(stream.slot),
+            None,
+            revision,
+            message,
+            Admission {
+                priority_delay,
+                now,
+                headroom,
+            },
+        )
+    }
+    fn offer_at(
+        &mut self,
+        index: Option<usize>,
+        key: Option<K>,
+        revision: u64,
+        message: Message<T>,
+        admission: Admission,
+    ) -> Result<Offer, Error> {
+        let Admission {
+            priority_delay,
+            now,
+            headroom,
+        } = admission;
         if let Some(i) = index {
             if revision <= self.slots[i].as_ref().unwrap().latest {
                 return Ok(Offer::Stale);
@@ -296,6 +387,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
             state.latest = revision;
             i
         } else {
+            let key = key.unwrap();
             let i = self.free.pop().unwrap_or(self.slots.len());
             let state = State {
                 key: key.clone(),
@@ -303,6 +395,7 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Mailbox<K, T, Q> {
                 acknowledged: None,
                 pending: Some(value),
                 flight: None,
+                identity: serial,
             };
             if i == self.slots.len() {
                 self.slots.push(Some(state));

@@ -2,7 +2,7 @@ use rill_delivery::queue::{external::*, *};
 use rill_delivery::*;
 use std::collections::HashMap;
 use std::hint::black_box;
-use std::sync::Arc;
+use std::sync::{Arc, Barrier};
 use std::time::Instant;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -14,6 +14,7 @@ struct Stamp {
     age: u64,
     bytes: u32,
     content: u64,
+    sent_at: u64,
 }
 struct Metrics {
     total: u128,
@@ -25,6 +26,25 @@ struct Metrics {
     offers: u64,
     peak_bytes: u64,
 }
+#[derive(Clone, Copy, Default)]
+struct Mode {
+    prepared: bool,
+    copied: bool,
+}
+struct Worker {
+    mode: Mode,
+    offset: usize,
+    peers: usize,
+    barrier: Option<Arc<Barrier>>,
+    shards: usize,
+}
+fn recipient_message(message: &Message<Vec<u8>>, copied: bool) -> Message<Vec<u8>> {
+    if copied {
+        Message::new(Arc::new(message.payload.as_ref().clone()), message.bytes()).unwrap()
+    } else {
+        message.clone()
+    }
+}
 fn payload(key: u64, revision: u64, seed: u64) -> Message<Vec<u8>> {
     let len = 8 + ((key ^ seed) % 8) * 8;
     let mut bytes = vec![0u8; len as usize];
@@ -34,6 +54,8 @@ fn payload(key: u64, revision: u64, seed: u64) -> Message<Vec<u8>> {
     }
     Message::new(Arc::new(bytes), len as u32 + 16).unwrap()
 }
+// Eight independent fixture observations, including the actual logical handoff tick.
+#[allow(clippy::too_many_arguments)]
 fn consume<Q: ReadyQueue>(
     d: &mut Dispatcher<u64, Vec<u8>, Q>,
     out: &mut Vec<Envelope<u64, Vec<u8>>>,
@@ -42,6 +64,7 @@ fn consume<Q: ReadyQueue>(
     held: &mut Vec<(Peer, Receipt)>,
     loss: bool,
     checksum: &mut u64,
+    now: u64,
 ) {
     for e in out.drain(..) {
         let peer = ids[&e.peer];
@@ -65,6 +88,7 @@ fn consume<Q: ReadyQueue>(
             age: item.queued_at,
             bytes: item.message.bytes(),
             content,
+            sent_at: now,
         });
         if loss && content % 7 == 0 {
             held.push((e.peer, item.receipt));
@@ -73,8 +97,14 @@ fn consume<Q: ReadyQueue>(
         }
     }
 }
-fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
-    let n = 20000;
+fn run<Q: ReadyQueue>(case: &str, seed: u64, worker: Worker) -> (Metrics, Vec<Stamp>) {
+    let Worker {
+        mode,
+        offset: global_offset,
+        peers: n,
+        barrier,
+        shards,
+    } = worker;
     let width = match case {
         "fanout" => 1,
         "resident" | "sparse" => 32,
@@ -83,7 +113,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
         _ => panic!("unknown case"),
     };
     let started = Instant::now();
-    let mut d = Dispatcher::<u64, Vec<u8>, Q>::new(n, 1 << 30).unwrap();
+    let mut d = Dispatcher::<u64, Vec<u8>, Q>::new(n, (1 << 30) / shards as u64).unwrap();
     let base = PeerConfig {
         limits: Limits {
             states: 64,
@@ -99,21 +129,36 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
     let mut ids = HashMap::new();
     for i in 0..n {
         let mut cfg = base;
-        if case == "slow" && i % 5 == 0 {
+        if case == "slow" && (i + global_offset) % 5 == 0 {
             cfg.bytes_per_tick = 16;
             cfg.burst = 256;
         }
         let peer = d.add_peer(cfg).unwrap();
         peers.push(peer);
-        ids.insert(peer, i as u32);
+        ids.insert(peer, (i + global_offset) as u32);
     }
     let mut offers = 0;
+    let mut streams: Vec<Vec<Stream>> = if mode.prepared {
+        (0..n).map(|_| Vec::with_capacity(width as usize)).collect()
+    } else {
+        Vec::new()
+    };
     for key in 0..width {
         let message = payload(key, 0, seed);
-        for &peer in &peers {
-            d.offer_state(peer, key, 0, message.clone(), (key % 16) as u16, 0)
-                .unwrap();
+        for (i, &peer) in peers.iter().enumerate() {
+            d.offer_state(
+                peer,
+                key,
+                0,
+                recipient_message(&message, mode.copied),
+                (key % 16) as u16,
+                0,
+            )
+            .unwrap();
             offers += 1;
+            if mode.prepared {
+                streams[i].push(d.stream(peer, &key).unwrap());
+            }
         }
     }
     let startup = started.elapsed().as_nanos();
@@ -139,6 +184,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
             &mut held,
             false,
             &mut checksum,
+            now,
         );
         now += 1;
         assert!(now < 512, "initial sync did not converge");
@@ -148,6 +194,9 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
     let mut frames = Vec::new();
     let mut peak_bytes = 0;
     for frame in 1..=12 {
+        if let Some(b) = &barrier {
+            b.wait();
+        }
         let begin = Instant::now();
         now += 1;
         let versions = if case == "fanout" { 4 } else { 1 };
@@ -157,18 +206,31 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
                 let key = (frame * 7 + offset * 11) % width;
                 let message = payload(key, revision, seed);
                 for (i, &peer) in peers.iter().enumerate() {
-                    if case == "sparse" && (i as u64 + seed) % 131 != 0 {
+                    if case == "sparse" && ((i + global_offset) as u64 + seed) % 131 != 0 {
                         continue;
                     }
-                    d.offer_state(
-                        peer,
-                        key,
-                        revision,
-                        message.clone(),
-                        ((key + seed) % 16) as u16,
-                        now,
-                    )
-                    .unwrap();
+                    let message = recipient_message(&message, mode.copied);
+                    if mode.prepared {
+                        d.offer_stream(
+                            peer,
+                            streams[i][key as usize],
+                            revision,
+                            message,
+                            ((key + seed) % 16) as u16,
+                            now,
+                        )
+                        .unwrap();
+                    } else {
+                        d.offer_state(
+                            peer,
+                            key,
+                            revision,
+                            message,
+                            ((key + seed) % 16) as u16,
+                            now,
+                        )
+                        .unwrap();
+                    }
                     offers += 1;
                 }
             }
@@ -176,8 +238,9 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
         if case == "events" {
             let event = payload(1000, frame, seed);
             for (i, &peer) in peers.iter().enumerate() {
-                if (i as u64 + frame) % 10 == 0 {
-                    d.offer_event(peer, event.clone(), 0, now).unwrap();
+                if ((i + global_offset) as u64 + frame) % 10 == 0 {
+                    d.offer_event(peer, recipient_message(&event, mode.copied), 0, now)
+                        .unwrap();
                     offers += 1;
                 }
             }
@@ -196,7 +259,11 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
             &mut held,
             case == "loss",
             &mut checksum,
+            now,
         );
+        if let Some(b) = &barrier {
+            b.wait();
+        }
         frames.push(begin.elapsed().as_nanos());
     }
     let flushing = Instant::now();
@@ -216,6 +283,7 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
             &mut held,
             false,
             &mut checksum,
+            now,
         );
         flushes += 1;
         assert!(flushes < 128, "flush did not converge");
@@ -248,11 +316,93 @@ fn run<Q: ReadyQueue>(case: &str, seed: u64) -> (Metrics, Vec<Stamp>) {
     )
 }
 fn checked<Q: ReadyQueue>(case: &str, seed: u64, expected: &[Stamp]) -> Metrics {
-    let (metrics, actual) = run::<Q>(case, seed);
+    let name = std::env::args().nth(1).unwrap();
+    let mode = Mode {
+        prepared: name.contains("-handles"),
+        copied: name.contains("-copied"),
+    };
+    let shards = name
+        .split("-shards")
+        .nth(1)
+        .map_or(1, |n| n.parse::<usize>().unwrap());
+    assert!([1, 2, 4, 8].contains(&shards));
+    let (mut metrics, mut actual) = if shards == 1 {
+        run::<Q>(
+            case,
+            seed,
+            Worker {
+                mode,
+                offset: 0,
+                peers: 20000,
+                barrier: None,
+                shards: 1,
+            },
+        )
+    } else {
+        let barrier = Arc::new(Barrier::new(shards));
+        let wall = Instant::now();
+        let results = std::thread::scope(|scope| {
+            let mut handles = Vec::new();
+            for index in 0..shards {
+                let worker = Worker {
+                    mode,
+                    offset: index * (20000 / shards),
+                    peers: 20000 / shards,
+                    barrier: Some(barrier.clone()),
+                    shards,
+                };
+                handles.push(scope.spawn(move || {
+                    // A failed proof must fail the process rather than strand its
+                    // sibling benchmark threads at a synchronization barrier.
+                    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        run::<Q>(case, seed, worker)
+                    })) {
+                        Ok(result) => result,
+                        Err(_) => std::process::exit(101),
+                    }
+                }));
+            }
+            handles
+                .into_iter()
+                .map(|h| h.join().unwrap())
+                .collect::<Vec<_>>()
+        });
+        let total = wall.elapsed().as_nanos();
+        let mut aggregate = Metrics {
+            total,
+            startup: 0,
+            initial_sync: 0,
+            frames: vec![0; 12],
+            flush: 0,
+            checksum: 0,
+            offers: 0,
+            peak_bytes: 0,
+        };
+        let mut output = Vec::new();
+        for (m, mut values) in results {
+            aggregate.startup = aggregate.startup.max(m.startup);
+            aggregate.initial_sync = aggregate.initial_sync.max(m.initial_sync);
+            aggregate.flush = aggregate.flush.max(m.flush);
+            aggregate.offers += m.offers;
+            aggregate.peak_bytes += m.peak_bytes;
+            for (i, n) in m.frames.into_iter().enumerate() {
+                aggregate.frames[i] = aggregate.frames[i].max(n);
+            }
+            output.append(&mut values);
+        }
+        (aggregate, output)
+    };
+    // Independent recipients have no cross-recipient ordering contract. Compare
+    // exact handoff ticks and complete order within each recipient/tick instead.
+    actual.sort_by_key(|s| (s.sent_at, s.peer));
     assert_eq!(
         actual, expected,
         "full delivery vector differs from ScanQueue reference state machine"
     );
+    metrics.checksum = actual.iter().fold(0u64, |h, s| {
+        h.wrapping_mul(37)
+            .wrapping_add(s.content ^ u64::from(s.peer) ^ s.key ^ s.revision ^ s.sent_at)
+    });
     metrics
 }
 fn main() {
@@ -262,8 +412,21 @@ fn main() {
     let seed = a[3].parse::<u64>().unwrap();
     // Reference run is outside the measured candidate interval. The state machine
     // is independently model-tested; this comparison proves exact queue substitution.
-    let (_, expected) = run::<ScanQueue>(case, seed);
-    let m = match backend.as_str() {
+    let (_, mut expected) = run::<ScanQueue>(
+        case,
+        seed,
+        Worker {
+            mode: Mode::default(),
+            offset: 0,
+            peers: 20000,
+            barrier: None,
+            shards: 1,
+        },
+    );
+    expected.sort_by_key(|s| (s.sent_at, s.peer));
+    let stripped = backend.replace("-handles", "").replace("-copied", "");
+    let base = stripped.split("-shards").next().unwrap();
+    let m = match base {
         "scan" => checked::<ScanQueue>(case, seed, &expected),
         "sorted" => checked::<SortedQueue>(case, seed, &expected),
         "tree" => checked::<TreeQueue>(case, seed, &expected),

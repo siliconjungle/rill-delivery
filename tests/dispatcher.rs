@@ -173,3 +173,31 @@ fn token_bucket_handles_maximum_integer_refill_without_overflow() {
     assert_eq!(b.available(u64::MAX).unwrap(), u64::MAX);
     assert_eq!(b.available(0), Err(Error::ClockWentBack));
 }
+
+#[test]
+fn prepared_global_admission_and_reconnect_are_atomic() {
+    let mut d = Dispatcher::<u64, u64>::new(2, 100).unwrap();
+    let a = d.add_peer(config()).unwrap();
+    let b = d.add_peer(config()).unwrap();
+    d.offer_state(a, 1, 1, message(1, 49), 0, 0).unwrap();
+    d.offer_state(b, 1, 1, message(1, 49), 0, 0).unwrap();
+    let stream = d.stream(a, &1).unwrap();
+    assert_eq!(
+        d.offer_stream(a, stream, 2, message(2, 52), 0, 1),
+        Err(Error::Capacity)
+    );
+    assert_eq!(d.progress(a, &1).unwrap().latest, 1);
+    assert_eq!(d.buffered_bytes(), 98);
+    d.offer_stream(a, stream, 2, message(2, 51), 0, 1).unwrap();
+    assert_eq!(d.buffered_bytes(), 100);
+    assert_eq!(
+        d.offer_stream(b, stream, 2, message(2, 1), 0, 1),
+        Err(Error::UnknownStream)
+    );
+    assert!(d.remove_peer(a));
+    let fresh = d.add_peer(config()).unwrap();
+    assert_eq!(
+        d.offer_stream(fresh, stream, 3, message(3, 1), 0, 1),
+        Err(Error::UnknownStream)
+    );
+}

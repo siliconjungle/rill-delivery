@@ -178,6 +178,37 @@ fn continuous_urgent_updates_do_not_reset_old_age() {
     assert!(observed);
 }
 
+#[test]
+fn prepared_streams_survive_updates_but_not_forgetting_or_foreign_mailboxes() {
+    let mut m = Mailbox::<String, u64>::new(limits()).unwrap();
+    let mut other = Mailbox::<String, u64>::new(limits()).unwrap();
+    let key = "generic/record".to_owned();
+    m.offer_state(key.clone(), 1, msg(1, 10), 0, 0).unwrap();
+    other.offer_state(key.clone(), 1, msg(1, 10), 0, 0).unwrap();
+    let stream = m.stream(&key).unwrap();
+    assert_eq!(
+        m.offer_stream(stream, 2, msg(2, 20), 0, 1),
+        Ok(Offer::Replaced)
+    );
+    assert_eq!(
+        other.offer_stream(stream, 2, msg(2, 20), 0, 1),
+        Err(Error::UnknownStream)
+    );
+    assert_eq!(m.offer_stream(stream, 1, msg(1, 1), 0, 1), Ok(Offer::Stale));
+    let mut out = Vec::new();
+    m.drain_into(1, 20, 1, &mut out).unwrap();
+    assert!(m.ack(out.remove(0).receipt));
+    assert_eq!(m.stream(&key), Some(stream));
+    assert!(m.forget_state(&key));
+    m.offer_state(key.clone(), 1, msg(1, 1), 0, 2).unwrap();
+    assert_ne!(m.stream(&key), Some(stream));
+    assert_eq!(
+        m.offer_stream(stream, 100, msg(100, 1), 0, 2),
+        Err(Error::UnknownStream)
+    );
+    assert_eq!(m.progress(&key).unwrap().latest, 1);
+}
+
 fn randomized_equivalence<Q: ReadyQueue>() {
     // ScanQueue is separately proven against BTreeMap, then used as a delivery
     // differential oracle across arbitrary scheduling structures and lifecycle churn.

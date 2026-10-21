@@ -213,10 +213,11 @@ fn prove<Q: ReadyQueue>(seed: u64) {
                 let cost = (random() % 40 + 1) as u32;
                 let delay = (random() % 20) as u16;
                 let message = Message::new(Arc::new(n), cost).unwrap();
-                assert_eq!(
-                    actual.offer_state(key, rev, message, delay, now),
-                    model.offer(key, rev, n, cost, delay, now)
-                );
+                let offered = match (n & 8 != 0, actual.stream(&key)) {
+                    (true, Some(stream)) => actual.offer_stream(stream, rev, message, delay, now),
+                    _ => actual.offer_state(key, rev, message, delay, now),
+                };
+                assert_eq!(offered, model.offer(key, rev, n, cost, delay, now));
             }
             4 => {
                 let cost = (random() % 40 + 1) as u32;

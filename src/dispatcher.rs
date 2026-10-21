@@ -1,5 +1,7 @@
 use crate::queue::{IndexedHeap, ReadyQueue};
-use crate::{Delivery, Error, Limits, Mailbox, Message, Offer, Progress, Receipt, TokenBucket};
+use crate::{
+    Delivery, Error, Limits, Mailbox, Message, Offer, Progress, Receipt, Stream, TokenBucket,
+};
 use std::hash::Hash;
 
 /// A handle to one recipient incarnation. Disconnect/reconnect never reuses its
@@ -214,6 +216,42 @@ impl<K: Eq + Hash + Clone, T: ?Sized, Q: ReadyQueue> Dispatcher<K, T, Q> {
         self.now = now;
         self.refresh(i);
         Ok(outcome)
+    }
+    pub fn stream(&self, peer: Peer, key: &K) -> Option<Stream> {
+        self.peers
+            .get(self.index(peer).ok()?)?
+            .value
+            .as_ref()?
+            .mailbox
+            .stream(key)
+    }
+    pub fn offer_stream(
+        &mut self,
+        peer: Peer,
+        stream: Stream,
+        revision: u64,
+        message: Message<T>,
+        priority_delay: u16,
+        now: u64,
+    ) -> Result<Offer, Error> {
+        if now < self.now {
+            return Err(Error::ClockWentBack);
+        }
+        let i = self.index(peer)?;
+        let m = &mut self.peers[i].value.as_mut().unwrap().mailbox;
+        let before = m.buffered_bytes();
+        let result = m.offer_stream_bounded(
+            stream,
+            revision,
+            message,
+            priority_delay,
+            now,
+            self.max_bytes - self.bytes,
+        )?;
+        self.bytes = self.bytes - before + m.buffered_bytes();
+        self.now = now;
+        self.refresh(i);
+        Ok(result)
     }
     pub fn offer_event(
         &mut self,

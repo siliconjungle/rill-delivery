@@ -26,6 +26,7 @@ result.check_returncode()
 artifacts=[json.loads(line) for line in result.stdout.splitlines() if line.startswith('{')]
 exe=next(Path(a['executable']) for a in artifacts if a.get('reason')=='compiler-artifact' and a['target']['name']==bench and 'bench' in a['target']['kind'] and a.get('executable'))
 destination=ROOT/'build'/label
+destination.parent.mkdir(parents=True,exist_ok=True)
 if destination.exists(): raise SystemExit('refusing to overwrite a frozen executable')
 shutil.copy2(exe,destination)
 assert all(sha(ROOT/p)==h for p,h in hashes.items()),'source changed while building'

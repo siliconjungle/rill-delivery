@@ -29,6 +29,7 @@ def main():
     p.add_argument("--backends", nargs="+", default=BACKENDS)
     p.add_argument("--label",default=None)
     p.add_argument("--bench",choices=["queues","delivery"],default="queues")
+    p.add_argument("--seeds",nargs="+",type=int,default=None)
     args = p.parse_args()
     binary = Path(args.binary).resolve()
     receipt_path=ROOT/'evidence'/(binary.name+'-build.json')
@@ -47,7 +48,7 @@ def main():
               "bench_sha256":receipt['source_sha256']['benches/'+args.bench+'.rs'],"driver_sha256":sha(Path(__file__)),
               "clock":"Instant wall time; output construction and queue destruction included; output vector verification/destruction outside timing",
               "other_workers":"left running; parallel screen timings cannot support acceptance claims",
-              "seeds":[71923,61937] if args.phase=="parallel-screen" else [982451653,961748941]}
+              "seeds":args.seeds or ([71923,61937] if args.phase=="parallel-screen" else [982451653,961748941])}
     (ROOT/"evidence"/(label+"-config.json")).write_text(json.dumps(config,indent=2)+"\n")
     tasks=[]
     for rep in range(args.repetitions):
