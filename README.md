@@ -5,7 +5,9 @@ immutable payloads and recipient handles. The core has no dependencies, game rul
 ECS, transport, database, serializer or async runtime. Library source forbids unsafe
 code. MIT OR Apache-2.0.
 
-**Experimental:** final performance selection is in progress. The retained
+**Experimental API.** The final study contains 1,008 isolated process runs after
+a 592-configuration development screen. [Results and tradeoffs](research/results.md)
+report paired wall-time and CPU comparisons, including regressions. These component
 comparisons do not establish universal superiority over replication engines.
 
 ## What it does
@@ -162,3 +164,10 @@ measurement-only system-allocator shim to the delivery benchmark; those timings
 are excluded from speed acceptance. Its counts cover the candidate harness and
 returned proof buffers, not the reference run or a library-only physical heap bound.
 Process CPU time and summed worker CPU time are reported separately from wall time.
+
+The final comparison is registered in [final-protocol.json](research/final-protocol.json).
+Run `python3 tools/accept.py` to verify the retained complete process coverage,
+output checks, source bindings, uninstrumented build and required validation logs.
+The report includes per-seed and pooled intervals; no unique-fastest or live-network
+capacity claim is made. The current Rust 1.85-compatible source adds only a narrowly
+scoped deprecation-lint annotation relative to the measured runtime implementation.

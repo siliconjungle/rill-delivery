@@ -30,7 +30,7 @@ for c in cases:
         w = comparisons[c, chosen, b, 'mean_frame_ns']['pooled']
         lines.append(f"| {c} | {b} | {w['ratio']:.3f} [{w['lower_95']:.3f}, {w['upper_95']:.3f}] | {w['classification']} |")
 lines += ['', '## Lifecycle costs and memory', '',
-    'The table includes construction, initial synchronization, measured frames, final flushing, output collection and cleanup. Process CPU excludes the reference run. RSS includes reference, fixtures and proof output history; it is **not library-only resident memory**. Byte counters are declared logical wire costs, not physical payload sizes.', '',
+    'The table includes construction, initial synchronization, measured frames, final flushing, output collection and cleanup. For sharded runs, startup/initial-sync/flush stage values are maximum worker phase durations; total wall time also includes spawning and aggregation. Process CPU excludes the reference run. RSS includes reference, fixtures and proof output history; it is **not library-only resident memory**. Byte counters are declared logical wire costs, not physical payload sizes.', '',
     '| Workload | Configuration | Lifecycle wall ms | Process CPU ms | Startup ms | Initial sync ms | Whole-process peak RSS MiB |',
     '| --- | --- | ---: | ---: | ---: | ---: | ---: |']
 for c in cases:

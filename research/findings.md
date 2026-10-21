@@ -96,5 +96,7 @@ Reference -> measured -> accepted status is determined by retained evidence:
 - Fused admission lookup, no-op rank suppression and conservative cost-floor
   experiments are separately preserved in Git and frozen build receipts.
 
-Production selection and final statistical acceptance remain open while the
-isolated comparisons are running. Whole-engine universal superiority is unproven.
+The preregistered isolated comparison completed all 1,008 fresh processes. The
+[results](results.md) and machine-readable acceptance evidence report every retained
+comparison, including regressions and inconclusive intervals. The default remains
+the development-selected switching queue. Whole-engine universal superiority is unproven.

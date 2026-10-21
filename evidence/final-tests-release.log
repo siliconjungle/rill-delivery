@@ -1,4 +1,5 @@
-    Finished `release` profile [optimized] target(s) in 0.40s
+   Compiling rill-delivery v0.1.0 (/Users/james/Documents/ChatGPT/3d-modelling/rill-delivery)
+    Finished `release` profile [optimized] target(s) in 4.99s
      Running unittests src/lib.rs (target/release/deps/rill_delivery-764af1e1be1558f4)
 
 running 0 tests
@@ -8,84 +9,84 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
      Running tests/dispatcher.rs (target/release/deps/dispatcher-4fe626a8a5635696)
 
 running 7 tests
-test removal_unlinks_active_peers_and_reconnect_rejects_old_handles ... ok
 test global_capacity_is_atomic_and_backwards_time_is_rejected ... ok
 test prepared_global_admission_and_reconnect_are_atomic ... ok
 test slow_peer_cannot_consume_fast_peers_budget_and_acks_wake_pending_state ... ok
 test token_bucket_handles_maximum_integer_refill_without_overflow ... ok
+test removal_unlinks_active_peers_and_reconnect_rejects_old_handles ... ok
 test byte_credit_weights_and_rotation_avoid_starvation ... ok
 test twenty_thousand_recipients_converge_with_exact_limits ... ok
 
-test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
      Running tests/mailbox.rs (target/release/deps/mailbox-07d9c7ea2daf0139)
 
 running 14 tests
-test exact_budget_skips_large_state_but_events_are_fifo ... ok
-test coalescing_ack_retry_and_slot_reuse ... ok
-test continuous_urgent_updates_do_not_reset_old_age ... ok
-test blocked_budget_then_small_state_retry_and_event_ack_resume ... ok
-test foreign_receipts_and_payload_sharing ... ok
 test admission_failure_is_atomic_and_counts_inflight ... ok
 test prepared_streams_survive_updates_but_not_forgetting_or_foreign_mailboxes ... ok
-test timestamp_overflow_and_zero_work_are_atomic ... ok
+test exact_budget_skips_large_state_but_events_are_fifo ... ok
+test coalescing_ack_retry_and_slot_reuse ... ok
+test blocked_budget_then_small_state_retry_and_event_ack_resume ... ok
+test foreign_receipts_and_payload_sharing ... ok
+test continuous_urgent_updates_do_not_reset_old_age ... ok
 test unsized_payloads_and_small_budget_then_replacement ... ok
+test timestamp_overflow_and_zero_work_are_atomic ... ok
 test randomized_lazy ... ok
 test randomized_sorted ... ok
 test randomized_indexed ... ok
 test randomized_hybrid ... ok
 test randomized_external ... ok
 
-test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
 
      Running tests/model.rs (target/release/deps/model-e05b8384a403b8e9)
 
 running 3 tests
-test independent_model_adaptive ... ok
 test independent_model_heap ... ok
+test independent_model_adaptive ... ok
 test independent_model_switching ... ok
 
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
 
      Running tests/queues.rs (target/release/deps/queues-877cb42ee1b5bb95)
 
 running 37 tests
-test cached_hybrid16 ... ok
+test adaptive4 ... ok
 test adaptive8 ... ok
 test adaptive32 ... ok
-test adaptive16 ... ok
-test cached_hybrid4 ... ok
-test adaptive4 ... ok
-test cached_hybrid32 ... ok
 test cached_hybrid64 ... ok
+test cached_hybrid16 ... ok
+test cached_hybrid32 ... ok
+test cached_hybrid4 ... ok
+test adaptive16 ... ok
 test cached_hybrid8 ... ok
-test comparisons::keyed ... ok
-test comparisons::orx_index4 ... ok
-test cached_scan ... ok
 test comparisons::orx_index2 ... ok
+test comparisons::orx_index4 ... ok
+test comparisons::keyed ... ok
 test comparisons::orx_index8 ... ok
 test comparisons::orx_map4 ... ok
+test cached_scan ... ok
 test comparisons::orx_map2 ... ok
-test comparisons::orx_map8 ... ok
-test comparisons::priority ... ok
-test hybrid16 ... ok
 test hybrid32 ... ok
-test hybrid4 ... ok
-test hybrid64 ... ok
+test hybrid16 ... ok
 test hybrid8 ... ok
+test hybrid64 ... ok
+test comparisons::priority ... ok
+test comparisons::orx_map8 ... ok
+test hybrid4 ... ok
 test indexed16 ... ok
-test indexed2 ... ok
-test indexed8 ... ok
-test indexed4 ... ok
-test switch0_8 ... ok
 test lazy ... ok
+test indexed4 ... ok
+test indexed2 ... ok
+test switch0_8 ... ok
+test indexed8 ... ok
 test switch16_64 ... ok
 test scan ... ok
-test switch4_16 ... ok
 test switch4_32 ... ok
+test switch4_16 ... ok
+test switch8_32 ... ok
 test tournament ... ok
 test tree ... ok
-test switch8_32 ... ok
 test sorted ... ok
 
 test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.34s
@@ -93,7 +94,7 @@ test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fin
    Doc-tests rill_delivery
 
 running 1 test
-test src/lib.rs - (line 30) ... ok
+test src/lib.rs - (line 32) ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
 

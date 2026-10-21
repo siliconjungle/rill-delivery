@@ -1,0 +1,152 @@
+completed 21/1008
+completed 42/1008
+completed 63/1008
+completed 84/1008
+completed 105/1008
+completed 126/1008
+completed 147/1008
+completed 168/1008
+completed 189/1008
+completed 210/1008
+completed 231/1008
+completed 252/1008
+completed 273/1008
+completed 294/1008
+completed 315/1008
+completed 336/1008
+completed 357/1008
+completed 378/1008
+completed 399/1008
+completed 420/1008
+completed 441/1008
+completed 462/1008
+completed 483/1008
+completed 504/1008
+completed 525/1008
+completed 546/1008
+completed 567/1008
+completed 588/1008
+completed 609/1008
+completed 630/1008
+completed 651/1008
+completed 672/1008
+completed 693/1008
+completed 714/1008
+completed 735/1008
+completed 756/1008
+completed 777/1008
+completed 798/1008
+completed 819/1008
+completed 840/1008
+completed 861/1008
+completed 882/1008
+completed 903/1008
+completed 924/1008
+completed 945/1008
+completed 966/1008
+completed 987/1008
+completed 1008/1008
+{
+  "fanout": [
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 39.06825,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 40.481896,
+      "runs": 14
+    },
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 42.1086455,
+      "runs": 14
+    }
+  ],
+  "resident": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 177.135979,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 179.208896,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 184.242333,
+      "runs": 14
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 119.6910205,
+      "runs": 14
+    },
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 119.888562,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 131.637708,
+      "runs": 14
+    }
+  ],
+  "slow": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 106.278646,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 111.3390625,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 111.8222705,
+      "runs": 14
+    }
+  ],
+  "loss": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 144.539208,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 145.1480415,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 147.4862085,
+      "runs": 14
+    }
+  ],
+  "events": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 74.701,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 76.133542,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 76.884792,
+      "runs": 14
+    }
+  ]
+}

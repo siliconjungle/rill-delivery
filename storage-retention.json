@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "state": "active",
+  "state": "completed public-library study; selected proofs and reproducibility inputs retained",
   "keep": [
     {
       "path": ".git",
@@ -73,6 +73,30 @@
     {
       "path": "build/delivery-allocations",
       "reason": "Exact separate measurement-instrumented executable"
+    },
+    {
+      "path": "build/queues-screen",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "build/queues-v2",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "build/delivery-v1",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "build/delivery-v2",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "build/delivery-v3",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "build/delivery-v6",
+      "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
     }
   ],
   "safe_to_remove": [
@@ -83,6 +107,18 @@
     {
       "path": "build/msrv-target",
       "reason": "Completed Cargo validation staging; required checks/logs, frozen executable and source inputs are retained. Rebuild from the lockfile if needed."
+    },
+    {
+      "path": "build/delivery-v4",
+      "reason": "Completed intermediate build; selected measured baselines, latest final executable, source history and receipts are retained."
+    },
+    {
+      "path": "build/delivery-v5",
+      "reason": "Completed intermediate build; selected measured baselines, latest final executable, source history and receipts are retained."
+    },
+    {
+      "path": "build/delivery-final",
+      "reason": "Completed intermediate build; selected measured baselines, latest final executable, source history and receipts are retained."
     }
   ]
 }

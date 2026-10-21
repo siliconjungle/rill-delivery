@@ -1,0 +1,374 @@
+{
+  "fanout": [
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 39.06825,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 40.481896,
+      "runs": 14
+    },
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 42.1086455,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 43.1902085,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 44.9323335,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 47.0983125,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 56.4968335,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 73.761354,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 74.445396,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 90.7807085,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 92.396688,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 119.523979,
+      "runs": 14
+    }
+  ],
+  "resident": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 177.135979,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 179.208896,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 184.242333,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 212.260646,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 227.1188125,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 227.6643955,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 364.2189165,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 524.199896,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 540.2137495,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 591.652208,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 592.6480625,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 677.3682085,
+      "runs": 14
+    }
+  ],
+  "sparse": [
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 119.6910205,
+      "runs": 14
+    },
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 119.888562,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 131.637708,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 147.5844375,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 159.776208,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 168.3775835,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 246.395833,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 318.718188,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 330.014396,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 353.4559165,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 355.562229,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 379.7412505,
+      "runs": 14
+    }
+  ],
+  "slow": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 106.278646,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 111.3390625,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 111.8222705,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 129.9995,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 133.4581255,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 134.497167,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 203.542875,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 314.436021,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 324.097208,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 340.6768745,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 343.5857085,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 431.142979,
+      "runs": 14
+    }
+  ],
+  "loss": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 144.539208,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 145.1480415,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 147.4862085,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 162.6854165,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 177.48425,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 182.8505005,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 261.1392705,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 386.5445415,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 404.685187,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 414.859771,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 419.959042,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 474.1076875,
+      "runs": 14
+    }
+  ],
+  "events": [
+    {
+      "backend": "heap8-handles-shards8",
+      "median_ms": 74.701,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles-shards8",
+      "median_ms": 76.133542,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards8",
+      "median_ms": 76.884792,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-copied-shards8",
+      "median_ms": 84.468708,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards4",
+      "median_ms": 89.9059795,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles-shards4",
+      "median_ms": 92.4255415,
+      "runs": 14
+    },
+    {
+      "backend": "switch16-64-handles-shards2",
+      "median_ms": 130.645958,
+      "runs": 14
+    },
+    {
+      "backend": "default-handles",
+      "median_ms": 183.4979795,
+      "runs": 14
+    },
+    {
+      "backend": "orx-index2-handles",
+      "median_ms": 188.668562,
+      "runs": 14
+    },
+    {
+      "backend": "default",
+      "median_ms": 205.5205205,
+      "runs": 14
+    },
+    {
+      "backend": "heap4",
+      "median_ms": 207.9872085,
+      "runs": 14
+    },
+    {
+      "backend": "heap4-copied",
+      "median_ms": 250.0505625,
+      "runs": 14
+    }
+  ]
+}
