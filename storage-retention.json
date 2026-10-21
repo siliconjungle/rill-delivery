@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "state": "completed public-library study; selected proofs and reproducibility inputs retained",
+  "state": "active generic JavaScript port and performance-gated private integration",
   "keep": [
     {
       "path": ".git",
@@ -97,6 +97,10 @@
     {
       "path": "build/delivery-v6",
       "reason": "Exact executable for a retained selected development comparison baseline; source and build receipt retained."
+    },
+    {
+      "path": "js",
+      "reason": "Generic JavaScript port, tests and comparison reproduction inputs"
     }
   ],
   "safe_to_remove": [

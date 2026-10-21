@@ -1,0 +1,12 @@
+{
+  "name": "@siliconjungle/rill-delivery",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Generic bounded coalescing delivery scheduling for JavaScript and Node.js",
+  "license": "MIT OR Apache-2.0",
+  "engines": {"node": ">=22"},
+  "exports": {".": "./index.mjs", "./snapshots": "./snapshots.mjs"},
+  "files": ["index.mjs", "snapshots.mjs", "README.md", "LICENSE-MIT", "LICENSE-APACHE"],
+  "scripts": {"test": "node --test test/*.test.mjs"},
+  "repository": {"type": "git", "url": "https://github.com/siliconjungle/rill-delivery", "directory": "js"}
+}
