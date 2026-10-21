@@ -12,6 +12,7 @@ import re
 import statistics
 import subprocess
 import time
+import datetime
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKENDS = "scan sorted tree lazy heap2 heap4 heap8 heap16 hybrid4 hybrid8 hybrid16 hybrid32 hybrid64 priority keyed orx-map2 orx-map4 orx-map8 orx-index2 orx-index4 orx-index8 cached-scan tournament cached4 cached8 cached16 cached32 cached64 adaptive4 adaptive8 adaptive16 adaptive32".split()
@@ -42,11 +43,12 @@ def main():
     output = ROOT / "evidence" / (label + ".ndjson")
     if output.exists(): raise SystemExit("Refusing to overwrite existing measurements")
     config = {"schema":1,"phase":args.phase,"binary_sha256":sha(binary),"host":platform.platform(),
+              "started_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"load_average_start":os.getloadavg() if hasattr(os,'getloadavg') else None,
               "machine":platform.machine(),"python":platform.python_version(),"argv":vars(args),
               "source_sha256":receipt['source_sha256'],"source_commit":receipt['source_commit'],
               "build_receipt_sha256":sha(receipt_path),
               "bench_sha256":receipt['source_sha256']['benches/'+args.bench+'.rs'],"driver_sha256":sha(Path(__file__)),
-              "clock":"Instant wall time; output construction and queue destruction included; output vector verification/destruction outside timing",
+              "clock":"Candidate lifecycle wall time includes output construction, cleanup and shard-output aggregation. Reference and exact vector verification excluded. Sharded frame wall time includes barriers.",
               "other_workers":"left running; parallel screen timings cannot support acceptance claims",
               "seeds":args.seeds or ([71923,61937] if args.phase=="parallel-screen" else [982451653,961748941])}
     (ROOT/"evidence"/(label+"-config.json")).write_text(json.dumps(config,indent=2)+"\n")
