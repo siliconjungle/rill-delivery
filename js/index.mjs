@@ -132,14 +132,14 @@ export class Dispatcher {
   }
   removePeer(peer) { let i;try{i=this.index(peer);}catch{return false;}this.unlink(i);this.bytes-=this.peers[i].value.mailbox.bytes;this.peers[i].value=null;this.free.push(i);this.count--;return true; }
   offerState(peer,key,revision,message,delay=0,now=this.now) { integer(now);if(now<this.now)fail('ClockWentBack');const i=this.index(peer),m=this.peers[i].value.mailbox,old=m.bytes;const r=m.offerState(key,revision,message,delay,now,this.maxBytes-this.bytes);this.bytes+=m.bytes-old;this.now=now;this.refresh(i);return r; }
-  stream(peer,key) { return this.peers[this.index(peer)].value.mailbox.stream(key); }
+  stream(peer,key) { let i;try{i=this.index(peer);}catch{return null;}return this.peers[i].value.mailbox.stream(key); }
   offerStream(peer,stream,revision,message,delay=0,now=this.now) { integer(now);if(now<this.now)fail('ClockWentBack');const i=this.index(peer),m=this.peers[i].value.mailbox,old=m.bytes;const r=m.offerStream(stream,revision,message,delay,now,this.maxBytes-this.bytes);this.bytes+=m.bytes-old;this.now=now;this.refresh(i);return r; }
   offerEvent(peer,message,delay=0,now=this.now) { integer(now);if(now<this.now)fail('ClockWentBack');const i=this.index(peer),m=this.peers[i].value.mailbox;if(this.bytes+message.bytes>this.maxBytes)fail('Capacity');const r=m.offerEvent(message,delay,now);this.bytes+=message.bytes;this.now=now;this.refresh(i);return r; }
   finish(peer,receipt,method) { let i;try{i=this.index(peer);}catch{return false;}const m=this.peers[i].value.mailbox,old=m.bytes,r=m[method](receipt);this.bytes+=m.bytes-old;this.refresh(i);return r; }
   ack(peer,receipt) { return this.finish(peer,receipt,'ack'); }
   retry(peer,receipt) { return this.finish(peer,receipt,'retry'); }
   forgetState(peer,key) { let i;try{i=this.index(peer);}catch{return false;}const m=this.peers[i].value.mailbox,old=m.bytes,r=m.forgetState(key);this.bytes+=m.bytes-old;this.refresh(i);return r; }
-  progress(peer,key) { return this.peers[this.index(peer)].value.mailbox.progress(key); }
+  progress(peer,key) { let i;try{i=this.index(peer);}catch{return null;}return this.peers[i].value.mailbox.progress(key); }
   dispatchInto(now,{bytes,perPeerBytes,deliveries,visits},out) {
     integer(now);integer(bytes);integer(perPeerBytes);integer(deliveries);integer(visits);if(now<this.now)fail('ClockWentBack');this.now=now;
     let remaining=bytes,sent=0,visited=0;const limit=Math.min(visits,this.active);
