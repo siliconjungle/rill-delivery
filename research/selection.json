@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "registered_protocol_sha256": "0e6cdbbe07b9be56efd6d9d604cf6afd3b82f56274379f7c48cbe9d7cb79725e",
+  "training_matrix_sha256": "195a78b1039883b99fd50650765bfea1c01a0c45830932c9b660310f341dc6d5",
+  "configuration_count": 592,
+  "finalists": [
+    "heap4",
+    "default",
+    "default-handles",
+    "orx-index2-handles",
+    "default-handles-shards8",
+    "heap8-handles-shards8",
+    "orx-index2-handles-shards8",
+    "default-handles-copied-shards8",
+    "default-handles-shards4",
+    "switch16-64-handles-shards4",
+    "switch16-64-handles-shards2",
+    "heap4-copied"
+  ],
+  "selection_frozen": true,
+  "unique_fastest_claim": "not established; requires final paired comparisons"
+}
